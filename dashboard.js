@@ -1,18 +1,16 @@
 import { supabase } from './supabase-client.js'
 
 const statusEl = document.querySelector('#status')
-const userEmailEl = document.querySelector('#userEmail')
-const providerNameEl = document.querySelector('#providerName')
 const logoutBtn = document.querySelector('#logoutBtn')
 
 const guildAInput = document.querySelector('#guildAInput')
 const guildBInput = document.querySelector('#guildBInput')
 const matchDateInput = document.querySelector('#matchDateInput')
 const matchRoundInput = document.querySelector('#matchRoundInput')
+const matchResultInput = document.querySelector('#matchResultInput')
 
 const csvFileInput = document.querySelector('#csvFileInput')
 const importStatsBtn = document.querySelector('#importStatsBtn')
-const leagueTableBody = document.querySelector('#leagueTableBody')
 const selectedFilesList = document.querySelector('#selectedFilesList')
 
 function setStatus(message, isError = false) {
@@ -27,13 +25,7 @@ function lockLeagueActions(disabled) {
   if (guildBInput) guildBInput.disabled = disabled
   if (matchDateInput) matchDateInput.disabled = disabled
   if (matchRoundInput) matchRoundInput.disabled = disabled
-}
-
-function readProviderName(user) {
-  const provider = user.app_metadata?.provider
-  if (provider === 'google') return 'Google'
-  if (provider === 'discord') return 'Discord'
-  return provider ?? 'Unknown'
+  if (matchResultInput) matchResultInput.disabled = disabled
 }
 
 async function requireAuth() {
@@ -42,9 +34,6 @@ async function requireAuth() {
     window.location.replace('./login.html')
     return null
   }
-
-  userEmailEl.textContent = data.user.email ?? '(無 Email)'
-  providerNameEl.textContent = readProviderName(data.user)
   return data.user
 }
 
@@ -94,9 +83,20 @@ function toInt(value) {
 }
 
 function parseGuildsFromFilename(name) {
-  const m = name.match(/^[^_]+_([^_]+)_([^_.]+)\.csv$/i)
+  const base = name.replace(/\.csv$/i, '')
+  const tokens = base.split('_')
+  if (tokens.length < 4) return null
+  const guildA = tokens[tokens.length - 2]
+  const guildB = tokens[tokens.length - 1]
+  if (!guildA || !guildB) return null
+  return { guildA, guildB }
+}
+
+function parseDateFromFilename(name) {
+  const m = name.match(/^(\d{8})_/)
   if (!m) return null
-  return { guildA: m[1], guildB: m[2] }
+  const d = m[1]
+  return `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`
 }
 
 function parseBattleCsv(text) {
@@ -168,25 +168,6 @@ function parseBattleCsv(text) {
   return teams
 }
 
-function renderLeagueTable(leagues) {
-  leagueTableBody.innerHTML = ''
-  if (!leagues.length) {
-    leagueTableBody.innerHTML = '<tr><td colspan="4">尚無資料</td></tr>'
-    return
-  }
-
-  for (const league of leagues) {
-    const tr = document.createElement('tr')
-    tr.innerHTML = `
-      <td>${league.match_date}</td>
-      <td>第${league.round_no}場</td>
-      <td>${league.guild_a}</td>
-      <td>${league.guild_b}</td>
-    `
-    leagueTableBody.appendChild(tr)
-  }
-}
-
 function renderSelectedFiles(files) {
   selectedFilesList.innerHTML = ''
   if (!files.length) return
@@ -196,23 +177,6 @@ function renderSelectedFiles(files) {
     li.textContent = file.name
     selectedFilesList.appendChild(li)
   }
-}
-
-async function loadLeagues() {
-  const { data, error } = await supabase
-    .from('guild_leagues')
-    .select('id, guild_a, guild_b, match_date, round_no')
-    .order('match_date', { ascending: false })
-    .order('round_no', { ascending: false })
-    .limit(100)
-
-  if (error) {
-    setStatus(`讀取聯賽失敗：${error.message}`, true)
-    return
-  }
-
-  const leagues = data ?? []
-  renderLeagueTable(leagues)
 }
 
 async function onImportStats() {
@@ -226,9 +190,10 @@ async function onImportStats() {
   const guildB = guildBInput.value.trim()
   const matchDate = matchDateInput.value
   const roundNo = toInt(matchRoundInput.value)
+  const matchResult = matchResultInput.value
 
   if (!guildA || !guildB || !matchDate || !roundNo) {
-    setStatus('請完整填入幫會 A / 幫會 B / 日期 / 場次。', true)
+    setStatus('請完整填入我方幫會 / 敵方幫會 / 日期 / 場次。', true)
     return
   }
 
@@ -255,7 +220,13 @@ async function onImportStats() {
 
   const { data: newLeague, error: createLeagueError } = await supabase
     .from('guild_leagues')
-    .insert({ guild_a: guildA, guild_b: guildB, match_date: matchDate, round_no: roundNo })
+    .insert({
+      guild_a: guildA,
+      guild_b: guildB,
+      match_date: matchDate,
+      round_no: roundNo,
+      result: matchResult
+    })
     .select('id')
     .single()
 
@@ -297,7 +268,6 @@ async function onImportStats() {
 
   lockLeagueActions(false)
   setStatus(`匯入完成：已建立聯賽並新增 ${rows.length} 筆個人戰績。`)
-  await loadLeagues()
   csvFileInput.value = ''
   renderSelectedFiles([])
 }
@@ -314,9 +284,11 @@ async function onCsvFilesChanged() {
   if (parsed) {
     guildAInput.value = parsed.guildA
     guildBInput.value = parsed.guildB
-    setStatus('已由檔名自動判斷幫會 A / B。')
+    const parsedDate = parseDateFromFilename(file.name)
+    if (parsedDate) matchDateInput.value = parsedDate
+    setStatus('已由檔名自動判斷我方/敵方幫會與日期。')
   } else {
-    setStatus('檔名無法判斷幫會 A / B，請手動填寫。', true)
+    setStatus('檔名無法判斷幫會或日期，請手動填寫。', true)
   }
 }
 
@@ -324,7 +296,6 @@ async function bootstrap() {
   const user = await requireAuth()
   if (!user) return
 
-  await loadLeagues()
   setStatus('請建立聯賽並匯入戰績。')
 
   if (logoutBtn) logoutBtn.addEventListener('click', onLogout)

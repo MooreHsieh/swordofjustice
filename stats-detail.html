@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>有夢最美｜聯賽細節</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="stylesheet" href="./shared.css">
+</head>
+<body class="detail-page">
+  <header class="detail-top-header">
+    <a class="detail-home" href="./stats.html">⌂</a>
+    <div class="detail-top-vs">
+      <div class="detail-vs-line" id="detailVsLine">讀取中...</div>
+      <div class="detail-vs-meta" id="detailMetaLine">—</div>
+    </div>
+    <div class="detail-top-actions">
+      <a class="nav-btn" href="./stats.html">返回聯賽清單</a>
+      <button id="logoutBtn" class="danger" type="button">登出</button>
+    </div>
+  </header>
+
+  <div class="detail-app">
+    <aside class="detail-sidebar">
+      <div class="detail-sb-title">場次</div>
+      <button class="detail-nav-btn active" data-view="a" id="viewBtnA">🔵 我方</button>
+      <button class="detail-nav-btn" data-view="b" id="viewBtnB">🔴 對方</button>
+      <div class="detail-mvp-box">
+        <div class="detail-mvp-title">🏆 當場 MVP</div>
+        <div id="mvpList" class="detail-mvp-list"></div>
+      </div>
+    </aside>
+
+    <main class="detail-main">
+      <section class="detail-main-head">
+        <div>
+          <h1 id="leagueTitle">聯賽細節</h1>
+          <p id="status" aria-live="polite">資料讀取中...</p>
+        </div>
+      </section>
+
+      <section class="detail-toolbar">
+        <div class="detail-tabs" id="detailTabs">
+          <button class="detail-tab active" data-tab="overview">📊 總覽</button>
+          <button class="detail-tab" data-tab="charts">📈 圖表</button>
+        </div>
+        <input id="playerSearch" class="detail-search" type="text" placeholder="🔍 搜尋玩家">
+      </section>
+
+      <section id="detailContent" class="detail-content"></section>
+    </main>
+  </div>
+  <script src="./config.js"></script>
+  <script type="module" src="./stats-detail.js"></script>
+</body>
+</html>

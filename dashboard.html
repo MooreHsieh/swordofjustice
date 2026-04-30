@@ -21,24 +21,21 @@
     </div>
 
     <section class="stack">
-      <p>已登入：<strong id="userEmail"></strong></p>
-      <p>登入方式：<strong id="providerName"></strong></p>
-
       <section class="panel stack">
         <p>單場匯入（同時建立聯賽與戰績）</p>
         <div class="field">
           <label for="csvFileInput">戰績 CSV（單一檔案）</label>
           <input id="csvFileInput" type="file" accept=".csv,text/csv">
-          <div class="hint">選檔後會嘗試以檔名格式：時間_幫會A_幫會B.csv 自動帶入幫會</div>
+          <div class="hint">選檔後會嘗試以檔名格式：20260430_12534_我方幫會_敵方幫會.csv 自動帶入</div>
           <ul id="selectedFilesList" class="file-list"></ul>
         </div>
         <div class="grid-2">
           <div class="field">
-            <label for="guildAInput">幫會 A</label>
+            <label for="guildAInput">我方幫會</label>
             <input id="guildAInput" type="text" placeholder="例如：有夢最美">
           </div>
           <div class="field">
-            <label for="guildBInput">幫會 B</label>
+            <label for="guildBInput">敵方幫會</label>
             <input id="guildBInput" type="text" placeholder="例如：春夜星河">
           </div>
           <div class="field">
@@ -49,19 +46,18 @@
             <label for="matchRoundInput">場次</label>
             <input id="matchRoundInput" type="number" min="1" step="1" placeholder="例如：1">
           </div>
+          <div class="field">
+            <label for="matchResultInput">勝負</label>
+            <select id="matchResultInput">
+              <option value="unknown">未定</option>
+              <option value="our_win">我方勝利</option>
+              <option value="enemy_win">敵方勝利</option>
+            </select>
+          </div>
         </div>
         <button id="importStatsBtn" class="primary" type="button">匯入（建立聯賽 + 個人戰績）</button>
       </section>
 
-      <section class="panel stack">
-        <p>近期聯賽清單</p>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>日期</th><th>場次</th><th>幫會 A</th><th>幫會 B</th></tr></thead>
-            <tbody id="leagueTableBody"><tr><td colspan="4">尚無資料</td></tr></tbody>
-          </table>
-        </div>
-      </section>
     </section>
 
     <div id="status" aria-live="polite"></div>
