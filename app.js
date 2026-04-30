@@ -38,20 +38,20 @@ function setStatus(message, isError = false) {
 }
 
 function lockAuthActions(disabled) {
-  googleLoginBtn.disabled = disabled
-  discordLoginBtn.disabled = disabled
-  logoutBtn.disabled = disabled
+  if (googleLoginBtn) googleLoginBtn.disabled = disabled
+  if (discordLoginBtn) discordLoginBtn.disabled = disabled
+  if (logoutBtn) logoutBtn.disabled = disabled
 }
 
 function lockLeagueActions(disabled) {
-  createLeagueBtn.disabled = disabled
-  importStatsBtn.disabled = disabled
-  leagueSelect.disabled = disabled
-  csvFileInput.disabled = disabled
-  guildAInput.disabled = disabled
-  guildBInput.disabled = disabled
-  matchDateInput.disabled = disabled
-  matchRoundInput.disabled = disabled
+  if (createLeagueBtn) createLeagueBtn.disabled = disabled
+  if (importStatsBtn) importStatsBtn.disabled = disabled
+  if (leagueSelect) leagueSelect.disabled = disabled
+  if (csvFileInput) csvFileInput.disabled = disabled
+  if (guildAInput) guildAInput.disabled = disabled
+  if (guildBInput) guildBInput.disabled = disabled
+  if (matchDateInput) matchDateInput.disabled = disabled
+  if (matchRoundInput) matchRoundInput.disabled = disabled
 }
 
 function readProviderName(user) {
@@ -263,6 +263,7 @@ function updateImportPreview(fileCount, teamCount, rowCount) {
 }
 
 function renderSelectedFiles(files) {
+  if (!selectedFilesList) return
   selectedFilesList.innerHTML = ''
   if (!files.length) return
 
@@ -451,12 +452,12 @@ async function onCsvFilesChanged() {
 
 const fromOAuthCallback = normalizeOAuthReturnUrl()
 
-logoutBtn.addEventListener('click', onLogout)
-googleLoginBtn.addEventListener('click', () => onOAuthLogin('google'))
-discordLoginBtn.addEventListener('click', () => onOAuthLogin('discord'))
-createLeagueBtn.addEventListener('click', onCreateLeague)
-importStatsBtn.addEventListener('click', onImportStats)
-csvFileInput.addEventListener('change', onCsvFilesChanged)
+if (logoutBtn) logoutBtn.addEventListener('click', onLogout)
+if (googleLoginBtn) googleLoginBtn.addEventListener('click', () => onOAuthLogin('google'))
+if (discordLoginBtn) discordLoginBtn.addEventListener('click', () => onOAuthLogin('discord'))
+if (createLeagueBtn) createLeagueBtn.addEventListener('click', onCreateLeague)
+if (importStatsBtn) importStatsBtn.addEventListener('click', onImportStats)
+if (csvFileInput) csvFileInput.addEventListener('change', onCsvFilesChanged)
 
 supabase.auth.onAuthStateChange(async () => {
   const user = await refreshUser()
