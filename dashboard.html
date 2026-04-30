@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>有夢最美｜幫會聯賽管理</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="stylesheet" href="./shared.css">
+</head>
+<body class="page-center">
+  <main class="card">
+    <div class="topbar">
+      <div>
+        <h1>有夢最美</h1>
+        <p>幫會聯賽匯入管理</p>
+      </div>
+      <div class="topbar-actions">
+        <a class="nav-btn" href="./stats.html">回統計頁</a>
+        <button id="logoutBtn" class="danger" type="button">登出</button>
+      </div>
+    </div>
+
+    <section class="stack">
+      <p>已登入：<strong id="userEmail"></strong></p>
+      <p>登入方式：<strong id="providerName"></strong></p>
+
+      <section class="panel stack">
+        <p>單場匯入（同時建立聯賽與戰績）</p>
+        <div class="field">
+          <label for="csvFileInput">戰績 CSV（單一檔案）</label>
+          <input id="csvFileInput" type="file" accept=".csv,text/csv">
+          <div class="hint">選檔後會嘗試以檔名格式：時間_幫會A_幫會B.csv 自動帶入幫會</div>
+          <ul id="selectedFilesList" class="file-list"></ul>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="guildAInput">幫會 A</label>
+            <input id="guildAInput" type="text" placeholder="例如：有夢最美">
+          </div>
+          <div class="field">
+            <label for="guildBInput">幫會 B</label>
+            <input id="guildBInput" type="text" placeholder="例如：春夜星河">
+          </div>
+          <div class="field">
+            <label for="matchDateInput">日期</label>
+            <input id="matchDateInput" type="date">
+          </div>
+          <div class="field">
+            <label for="matchRoundInput">場次</label>
+            <input id="matchRoundInput" type="number" min="1" step="1" placeholder="例如：1">
+          </div>
+        </div>
+        <button id="importStatsBtn" class="primary" type="button">匯入（建立聯賽 + 個人戰績）</button>
+      </section>
+
+      <section class="panel stack">
+        <p>近期聯賽清單</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>日期</th><th>場次</th><th>幫會 A</th><th>幫會 B</th></tr></thead>
+            <tbody id="leagueTableBody"><tr><td colspan="4">尚無資料</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <div id="status" aria-live="polite"></div>
+  </main>
+  <script src="./config.js"></script>
+  <script type="module" src="./dashboard.js"></script>
+</body>
+</html>

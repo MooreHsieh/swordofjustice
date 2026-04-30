@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>有夢最美｜幫會聯賽登入</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="stylesheet" href="./shared.css">
+</head>
+<body class="page-center login-page">
+  <main class="card login-main">
+    <section class="login-hero">
+      <img class="brand-logo login-logo" src="./favicon.svg" alt="有夢最美 Logo">
+      <h1 class="hero-title">有夢最美</h1>
+      <p class="login-subtitle">幫會聯賽登入</p>
+    </section>
+
+    <section class="login-card stack">
+      <div class="divider">請選擇社群登入</div>
+      <div class="login-actions">
+        <button id="googleLoginBtn" class="oauth oauth-btn" type="button" aria-label="使用 Google 登入">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.2-.9 2.2-1.9 2.9l3 2.3c1.7-1.6 2.7-4 2.7-6.9 0-.7-.1-1.4-.2-2.1H12z"/><path fill="#34A853" d="M12 22c2.4 0 4.4-.8 5.9-2.2l-3-2.3c-.8.6-1.8 1-2.9 1-2.3 0-4.3-1.6-5-3.7H3.9v2.4C5.4 20.2 8.4 22 12 22z"/><path fill="#4A90E2" d="M7 14.8c-.2-.6-.3-1.2-.3-1.8s.1-1.2.3-1.8V8.8H3.9C3.3 10 3 11 3 13s.3 3 .9 4.2L7 14.8z"/><path fill="#FBBC05" d="M12 7.5c1.3 0 2.5.5 3.4 1.3l2.6-2.6C16.4 4.8 14.4 4 12 4 8.4 4 5.4 5.8 3.9 8.8L7 11.2c.7-2.1 2.7-3.7 5-3.7z"/></svg>
+            <span>Google 登入</span>
+        </button>
+        <button id="discordLoginBtn" class="oauth oauth-btn" type="button" aria-label="使用 Discord 登入">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#5865F2" d="M20.3 5.4A16.9 16.9 0 0 0 16.1 4c-.2.4-.5 1-.7 1.4a15.8 15.8 0 0 0-4.8 0c-.2-.4-.5-1-.7-1.4-1.5.2-2.9.7-4.2 1.4C3 9.1 2.3 12.7 2.6 16.2a17 17 0 0 0 5.1 2.6c.4-.6.8-1.2 1-1.9-.6-.2-1.2-.5-1.7-.8.1-.1.2-.2.3-.2 3.3 1.6 6.9 1.6 10.1 0l.3.2c-.5.3-1.1.6-1.7.8.3.7.6 1.3 1 1.9 1.9-.5 3.6-1.4 5.1-2.6.4-4.1-.6-7.7-2.8-10.8zM9.9 14.1c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2zm4.2 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2z"/></svg>
+            <span>Discord 登入</span>
+        </button>
+      </div>
+    </section>
+    <div id="status" aria-live="polite"></div>
+  </main>
+  <script src="./config.js"></script>
+  <script type="module" src="./login.js"></script>
+</body>
+</html>
