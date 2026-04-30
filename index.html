@@ -36,7 +36,7 @@
 
     .card {
       width: 100%;
-      max-width: 420px;
+      max-width: 760px;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 16px;
@@ -59,16 +59,6 @@
       display: grid;
       gap: 12px;
       margin-top: 18px;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 1rem;
-      background: #fff;
-      color: var(--text);
     }
 
     .row {
@@ -148,6 +138,91 @@
     .hidden {
       display: none;
     }
+
+    .panel {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border);
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      background: #fff;
+      color: var(--text);
+    }
+
+    .summary-box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .hint {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .file-list {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 0.84rem;
+      color: #4d493f;
+    }
+    .file-list li {
+      margin: 2px 0;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #ece7dd;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    thead th {
+      background: #f7f3ea;
+      color: #4d493f;
+    }
   </style>
 </head>
 <body>
@@ -156,13 +231,7 @@
     <p>先完成 GitHub Pages + Supabase 的基本會員登入。</p>
 
     <section id="authArea" class="stack">
-      <input id="email" type="email" placeholder="Email" autocomplete="email">
-      <input id="password" type="password" placeholder="Password (至少 6 碼)" autocomplete="current-password">
-      <div class="row">
-        <button id="signupBtn" class="secondary" type="button">註冊</button>
-        <button id="loginBtn" class="primary" type="button">登入</button>
-      </div>
-      <div class="divider">或使用第三方登入</div>
+      <div class="divider">請選擇社群登入</div>
       <div class="row">
         <button id="googleLoginBtn" class="oauth oauth-btn" type="button" aria-label="使用 Google 登入">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -186,6 +255,70 @@
       <p>已登入：<strong id="userEmail"></strong></p>
       <p>登入方式：<strong id="providerName"></strong></p>
       <button id="logoutBtn" class="danger" type="button">登出</button>
+
+      <section class="panel stack">
+        <p>幫會聯賽</p>
+        <div class="grid-2">
+          <div class="field">
+            <label for="guildAInput">幫會 A</label>
+            <input id="guildAInput" type="text" placeholder="例如：有夢最美">
+          </div>
+          <div class="field">
+            <label for="guildBInput">幫會 B</label>
+            <input id="guildBInput" type="text" placeholder="例如：春夜星河">
+          </div>
+          <div class="field">
+            <label for="matchDateInput">日期</label>
+            <input id="matchDateInput" type="date">
+          </div>
+          <div class="field">
+            <label for="matchRoundInput">場次</label>
+            <input id="matchRoundInput" type="number" min="1" step="1" placeholder="例如：1">
+          </div>
+        </div>
+        <button id="createLeagueBtn" class="primary" type="button">建立幫會聯賽</button>
+      </section>
+
+      <section class="panel stack">
+        <p>個人戰績匯入（CSV）</p>
+        <div class="grid-3">
+          <div class="summary-box">檔案數：<strong id="previewFileCount">0</strong></div>
+          <div class="summary-box">隊伍數：<strong id="previewTeamCount">0</strong></div>
+          <div class="summary-box">預估筆數：<strong id="previewRowCount">0</strong></div>
+        </div>
+        <div class="field">
+          <label for="leagueSelect">對應聯賽</label>
+          <select id="leagueSelect">
+            <option value="">請先選擇聯賽</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="csvFileInput">戰績 CSV（可多檔）</label>
+          <input id="csvFileInput" type="file" accept=".csv,text/csv" multiple>
+          <div id="filenameHint" class="hint">檔名格式：時間_幫會A_幫會B.csv（可自動帶入幫會）</div>
+          <ul id="selectedFilesList" class="file-list"></ul>
+        </div>
+        <button id="importStatsBtn" class="secondary" type="button">匯入個人戰績</button>
+      </section>
+
+      <section class="panel stack">
+        <p>近期聯賽清單</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>場次</th>
+                <th>幫會 A</th>
+                <th>幫會 B</th>
+              </tr>
+            </thead>
+            <tbody id="leagueTableBody">
+              <tr><td colspan="4">尚無資料</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </section>
 
     <div id="status" aria-live="polite"></div>

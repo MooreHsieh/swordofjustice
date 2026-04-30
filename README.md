@@ -1,53 +1,45 @@
-# Sword of Justice (Frontend + Supabase Auth)
+# Sword of Justice (Frontend + Supabase)
 
-此專案為純前端，部署目標是 GitHub Pages，先完成最小登入功能（Email/Password）。
+此專案為純前端（GitHub Pages），使用 Supabase 做社群登入與資料儲存。
 
-## 1) Supabase 設定
+## 功能
 
-1. 在 Supabase 建立專案。
-2. 到 `Authentication -> Providers -> Email`，啟用 Email provider。
-3. 到 `Project Settings -> API`，取得：
+- Google / Discord OAuth 登入
+- 幫會聯賽建立（雙方幫會、日期、場次）
+- 個人戰績 CSV 匯入（可多檔）
+
+## 1) Supabase 基本設定
+
+1. `Project Settings -> API` 取得：
    - `Project URL`
    - `anon public key`
+2. 編輯 [config.js](/Users/xiemenghuan/Documents/GitHub/swordofjustice/config.js) 填入上述兩個值。
 
-## 2) 前端設定
+## 2) OAuth 設定
 
-1. 編輯 `config.js`，填入你的 Supabase URL 與 anon key。
-2. `config.example.js` 是範本檔，可保留做參考。
+1. `Authentication -> Providers` 啟用 `Google` 與 `Discord`。
+2. `Authentication -> URL Configuration`：
+   - `Site URL`: `https://moorehsieh.github.io/swordofjustice/`
+   - `Redirect URLs`: 至少包含 `https://moorehsieh.github.io/swordofjustice/`
 
-說明：Supabase 的 `anon public key` 本來就是前端可公開使用，真正敏感的是 `service_role` key，不能放前端。
+## 3) 建立資料表
 
-## 3) GitHub Pages 部署
+在 Supabase SQL Editor 執行：
 
-1. 將程式推到 GitHub。
-2. Repository `Settings -> Pages`。
-3. `Build and deployment` 選 `Deploy from a branch`。
-4. Branch 選 `main`（或你的預設分支），Folder 選 `/ (root)`。
-5. 儲存後等部署完成，打開 GitHub Pages 網址。
+- [supabase_schema.sql](/Users/xiemenghuan/Documents/GitHub/swordofjustice/supabase_schema.sql)
 
-## 4) Supabase 網域白名單
+會建立兩張表：
+- `guild_leagues`：幫會聯賽主檔
+- `personal_records`：個人戰績明細
 
-到 Supabase：`Authentication -> URL Configuration`
+## 4) 使用流程
 
-- `Site URL` 填 GitHub Pages 網址，例如：
-  - `https://<your-github-name>.github.io/<repo-name>/`
-- `Redirect URLs` 也可加入同網址（之後若要做 OAuth 會用到）。
+1. 先建立一筆幫會聯賽（幫會 A/B、日期、場次）。
+2. 選擇對應聯賽。
+3. 上傳戰績 CSV（可多檔）。
+4. 系統會解析每個檔案內雙方幫會區塊並寫入 `personal_records`。
 
-## 5) 目前功能
+## CSV 說明
 
-- 註冊（Email/Password）
-- 登入（Email/Password）
-- Google OAuth 登入
-- Discord OAuth 登入
-- 登出
-- 顯示登入狀態
-
-如果你開啟了 Email 驗證，註冊後需要先收信驗證再登入。
-
-## 6) OAuth 額外設定（Google / Discord）
-
-到 Supabase：`Authentication -> Providers`
-
-1. 啟用 `Google` 並填入 Google OAuth client id/secret。
-2. 啟用 `Discord` 並填入 Discord OAuth client id/secret。
-3. 在兩邊 OAuth 平台都要把 callback URL 設成 Supabase 提供的 redirect URL。
+- 檔名格式若是 `時間_幫會A_幫會B.csv`，頁面會嘗試自動帶入幫會名稱。
+- 檔案內容可包含兩段幫會資料（中間可有空行與重複表頭），系統會自動解析。
