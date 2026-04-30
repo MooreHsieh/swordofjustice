@@ -116,7 +116,7 @@ function parseBattleCsv(text) {
     }
 
     const fields = parseCsvLine(line)
-    if (fields.length >= 2 && fields[0] !== '玩家名字' && /^\d+$/.test(fields[1])) {
+    if (fields.length >= 2 && fields[0] !== '玩家名字' && /^\d+$/.test(String(fields[1]).replace(/[^\d]/g, ''))) {
       const teamName = fields[0]
       const totalPlayers = toInt(fields[1])
       i += 1
@@ -132,7 +132,7 @@ function parseBattleCsv(text) {
         }
 
         const row = parseCsvLine(rowLine)
-        if (row.length >= 2 && row[0] !== '玩家名字' && /^\d+$/.test(row[1])) break
+        if (row.length >= 2 && row[0] !== '玩家名字' && /^\d+$/.test(String(row[1]).replace(/[^\d]/g, ''))) break
         if (row[0] === '玩家名字') {
           i += 1
           continue
@@ -200,6 +200,22 @@ async function onImportStats() {
   lockLeagueActions(true)
   setStatus('匯入中（建立聯賽 + 個人戰績）...')
 
+  const content = await file.text()
+  const teams = parseBattleCsv(content)
+  if (!teams.length) {
+    lockLeagueActions(false)
+    setStatus('CSV 解析失敗，找不到可匯入的隊伍資料。', true)
+    return
+  }
+
+  const matchTeamByName = (name) => teams.find((t) => String(t.teamName || '').trim() === String(name || '').trim())
+  const fallbackTeamA = teams[0]
+  const fallbackTeamB = teams[1]
+  const teamA = matchTeamByName(guildA) || fallbackTeamA
+  const teamB = matchTeamByName(guildB) || fallbackTeamB
+  const guildAPlayers = Number(teamA?.players?.length || 0)
+  const guildBPlayers = Number(teamB?.players?.length || 0)
+
   const { data: existingByFile, error: existingByFileError } = await supabase
     .from('personal_records')
     .select('id')
@@ -218,17 +234,34 @@ async function onImportStats() {
     return
   }
 
-  const { data: newLeague, error: createLeagueError } = await supabase
+  const baseLeaguePayload = {
+    guild_a: guildA,
+    guild_b: guildB,
+    match_date: matchDate,
+    round_no: roundNo,
+    result: matchResult
+  }
+  const leaguePayloadWithCounts = {
+    ...baseLeaguePayload,
+    guild_a_players: guildAPlayers,
+    guild_b_players: guildBPlayers
+  }
+
+  let createLeagueResult = await supabase
     .from('guild_leagues')
-    .insert({
-      guild_a: guildA,
-      guild_b: guildB,
-      match_date: matchDate,
-      round_no: roundNo,
-      result: matchResult
-    })
+    .insert(leaguePayloadWithCounts)
     .select('id')
     .single()
+
+  if (createLeagueResult.error && /guild_a_players|guild_b_players/i.test(createLeagueResult.error.message || '')) {
+    createLeagueResult = await supabase
+      .from('guild_leagues')
+      .insert(baseLeaguePayload)
+      .select('id')
+      .single()
+  }
+
+  const { data: newLeague, error: createLeagueError } = createLeagueResult
 
   if (createLeagueError) {
     lockLeagueActions(false)
@@ -237,21 +270,13 @@ async function onImportStats() {
   }
 
   const leagueId = newLeague.id
-  const content = await file.text()
-  const teams = parseBattleCsv(content)
-  if (!teams.length) {
-    lockLeagueActions(false)
-    setStatus('CSV 解析失敗，找不到可匯入的隊伍資料。', true)
-    return
-  }
-
   const rows = []
   for (const team of teams) {
     for (const player of team.players) {
       rows.push({
         league_id: leagueId,
         guild_name: team.teamName,
-        total_players_in_guild: team.totalPlayers,
+        total_players_in_guild: team.players.length,
         ...player,
         source_file_name: file.name
       })

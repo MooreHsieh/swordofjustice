@@ -33,7 +33,7 @@ async function onLogout() {
 function renderLeagueList(leagues) {
   leagueListBody.innerHTML = ''
   if (!leagues.length) {
-    leagueListBody.innerHTML = '<tr><td colspan="5">尚無資料</td></tr>'
+    leagueListBody.innerHTML = '<tr><td colspan="7">尚無資料</td></tr>'
     return
   }
 
@@ -43,7 +43,9 @@ function renderLeagueList(leagues) {
       <td>${league.match_date}</td>
       <td>第${league.round_no}場</td>
       <td>${league.guild_a}</td>
+      <td>${league.guild_a_players ?? 0}</td>
       <td>${league.guild_b}</td>
+      <td>${league.guild_b_players ?? 0}</td>
       <td><a class="nav-btn" href="./stats-detail.html?leagueId=${league.id}">查看細節</a></td>
     `
     leagueListBody.appendChild(tr)
@@ -73,7 +75,46 @@ async function loadStats() {
     return
   }
 
-  allLeagues = leagues ?? []
+  const baseLeagues = leagues ?? []
+  const leagueIds = baseLeagues.map((l) => l.id).filter(Boolean)
+  const leaguePlayerCountMap = new Map()
+
+  if (leagueIds.length) {
+    const { data: records, error: recordsError } = await supabase
+      .from('personal_records')
+      .select('league_id, guild_name, total_players_in_guild')
+      .in('league_id', leagueIds)
+
+    if (recordsError) {
+      setStatus(recordsError.message, true)
+      return
+    }
+
+    for (const row of records ?? []) {
+      const leagueId = row.league_id
+      const guildName = row.guild_name
+      if (!leagueId || !guildName) continue
+
+      if (!leaguePlayerCountMap.has(leagueId)) leaguePlayerCountMap.set(leagueId, new Map())
+      const guildMap = leaguePlayerCountMap.get(leagueId)
+      if (!guildMap.has(guildName)) guildMap.set(guildName, { maxTotal: 0, rowCount: 0 })
+      const bucket = guildMap.get(guildName)
+      bucket.rowCount += 1
+      bucket.maxTotal = Math.max(bucket.maxTotal, Number(row.total_players_in_guild || 0))
+    }
+  }
+
+  allLeagues = baseLeagues.map((league) => {
+    const guildMap = leaguePlayerCountMap.get(league.id) || new Map()
+    const a = guildMap.get(league.guild_a)
+    const b = guildMap.get(league.guild_b)
+    return {
+      ...league,
+      guild_a_players: a ? (a.maxTotal > 0 ? a.maxTotal : a.rowCount) : 0,
+      guild_b_players: b ? (b.maxTotal > 0 ? b.maxTotal : b.rowCount) : 0
+    }
+  })
+
   renderFilteredLeagueList()
 }
 

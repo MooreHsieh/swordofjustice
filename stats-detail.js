@@ -52,9 +52,14 @@ function computeMvp(rows) {
   return [
     { icon: '🏆', label: '擊殺王', key: 'kills' },
     { icon: '⚔', label: '助攻王', key: 'assists' },
-    { icon: '🔥', label: '輸出王', key: 'pvp_damage' },
+    { icon: '🔥', label: '輸出王', key: 'damage_to_players' },
+    { icon: '🏰', label: '塔傷王', key: 'damage_to_buildings' },
     { icon: '🛡', label: '承傷王', key: 'damage_taken' },
-    { icon: '💚', label: '治療王', key: 'healing_done' },
+    { icon: '💚', label: '治療王', key: 'healing' },
+    { icon: '💀', label: '重傷王', key: 'serious_injuries' },
+    { icon: '🕊', label: '化羽王', key: 'feather_spring' },
+    { icon: '🔥', label: '焚骨王', key: 'burning_bone' },
+    { icon: '💎', label: '資源王', key: 'resources' },
   ].map((item) => {
     const p = topBy(item.key)
     return { ...item, player: p }
@@ -100,10 +105,14 @@ function buildOverviewTable(rows) {
             ${th('職業', 'class_name')}
             ${th('擊敗', 'kills')}
             ${th('助攻', 'assists')}
-            ${th('輸出', 'pvp_damage')}
-            ${th('塔傷', 'tower_damage')}
-            ${th('治療', 'healing_done')}
+            ${th('輸出', 'damage_to_players')}
+            ${th('塔傷', 'damage_to_buildings')}
+            ${th('治療', 'healing')}
             ${th('承傷', 'damage_taken')}
+            ${th('重傷', 'serious_injuries')}
+            ${th('化羽', 'feather_spring')}
+            ${th('焚骨', 'burning_bone')}
+            ${th('資源', 'resources')}
           </tr>
         </thead>
         <tbody>
@@ -118,15 +127,19 @@ function buildOverviewTable(rows) {
                   <td>${r.class_name || '—'}</td>
                   <td>${formatNum(r.kills)}</td>
                   <td>${formatNum(r.assists)}</td>
-                  <td>${formatNum(r.pvp_damage)}</td>
-                  <td>${formatNum(r.tower_damage)}</td>
-                  <td>${formatNum(r.healing_done)}</td>
+                  <td>${formatNum(r.damage_to_players)}</td>
+                  <td>${formatNum(r.damage_to_buildings)}</td>
+                  <td>${formatNum(r.healing)}</td>
                   <td>${formatNum(r.damage_taken)}</td>
+                  <td>${formatNum(r.serious_injuries)}</td>
+                  <td>${formatNum(r.feather_spring)}</td>
+                  <td>${formatNum(r.burning_bone)}</td>
+                  <td>${formatNum(r.resources)}</td>
                 </tr>
               `
                   )
                   .join('')
-              : '<tr><td colspan="9" class="detail-empty">無符合資料</td></tr>'
+              : '<tr><td colspan="13" class="detail-empty">無符合資料</td></tr>'
           }
         </tbody>
       </table>
@@ -191,6 +204,9 @@ function renderContent() {
       <div class="detail-summary-box">玩家數：<strong>${rows.length}</strong></div>
       <div class="detail-summary-box">總擊敗：<strong>${formatNum(rows.reduce((s, r) => s + (r.kills || 0), 0))}</strong></div>
       <div class="detail-summary-box">總助攻：<strong>${formatNum(rows.reduce((s, r) => s + (r.assists || 0), 0))}</strong></div>
+      <div class="detail-summary-box">總重傷：<strong>${formatNum(rows.reduce((s, r) => s + (r.serious_injuries || 0), 0))}</strong></div>
+      <div class="detail-summary-box">總化羽：<strong>${formatNum(rows.reduce((s, r) => s + (r.feather_spring || 0), 0))}</strong></div>
+      <div class="detail-summary-box">總焚骨：<strong>${formatNum(rows.reduce((s, r) => s + (r.burning_bone || 0), 0))}</strong></div>
     </div>
   `
 
@@ -305,7 +321,7 @@ async function loadDetail() {
 
   const { data: records, error: recordError } = await supabase
     .from('personal_records')
-    .select('guild_name, player_name, class_name, kills, assists, pvp_damage, tower_damage, healing_done, damage_taken')
+    .select('guild_name, player_name, class_name, kills, assists, resources, damage_to_players, damage_to_buildings, healing, damage_taken, serious_injuries, feather_spring, burning_bone')
     .eq('league_id', leagueId)
 
   if (recordError) {
