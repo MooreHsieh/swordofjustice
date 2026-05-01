@@ -287,10 +287,14 @@ tbody tr:hover td { background: rgba(79, 195, 247, 0.08); }
 .totals-table-wrap {
   height: 100%;
   overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .totals-table-wrap table {
   min-width: 2400px;
+  width: max-content;
 }
 
 .totals-avg-heat {
