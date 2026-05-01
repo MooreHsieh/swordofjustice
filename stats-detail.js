@@ -16,7 +16,7 @@ const state = {
   view: 'a',
   tab: 'overview',
   search: '',
-  jobFilter: 'all',
+  jobFilter: '',
   sortKey: 'kills',
   sortAsc: false,
   grouped: { a: [], b: [] },
@@ -88,8 +88,9 @@ function renderMvp() {
   mvpListEl.innerHTML = mvp
     .map((m) => {
       if (!m.player) return ''
+      const isEnemy = m.player.guild_name && state.league && m.player.guild_name === state.league.guild_b
       return `
-        <div class="detail-mvp-item">
+        <div class="detail-mvp-item ${isEnemy ? 'enemy' : ''}">
           <span class="mvp-col mvp-col-label"><span class="mvp-ic">${m.icon}</span>${m.label}</span>
           <div class="mvp-row2">
             <span class="mvp-col mvp-col-name">${m.player.player_name}</span>
@@ -217,6 +218,57 @@ function buildClassSummaryTable(rows) {
   `
 }
 
+function buildSuwenQuadrant(rows) {
+  if (!rows.length) return ''
+  const W = 560
+  const H = 360
+  const PL = 64
+  const PR = 24
+  const PT = 24
+  const PB = 54
+  const pw = W - PL - PR
+  const ph = H - PT - PB
+  const maxX = Math.max(...rows.map((r) => Number(r.damage_taken || 0)), 1)
+  const maxY = Math.max(...rows.map((r) => Number(r.healing || 0)), 1)
+  const sx = (v) => PL + (Number(v || 0) / maxX) * pw
+  const sy = (v) => PT + ph - (Number(v || 0) / maxY) * ph
+  const midX = PL + pw / 2
+  const midY = PT + ph / 2
+
+  const dots = rows.map((r) => {
+    const x = sx(r.damage_taken)
+    const y = sy(r.healing)
+    const name = String(r.player_name || '').slice(0, 6)
+    return `<g>
+      <circle cx="${x}" cy="${y}" r="5" fill="rgba(244,143,177,0.88)" stroke="rgba(244,143,177,1)" stroke-width="1"/>
+      <text x="${x}" y="${y - 9}" text-anchor="middle" fill="#dce6f2" font-size="10">${name}</text>
+    </g>`
+  }).join('')
+
+  return `
+    <div class="detail-panel" style="margin-bottom:10px;overflow:auto">
+      <h3>素問象限</h3>
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;min-width:${W}px">
+        <rect x="${PL}" y="${PT}" width="${pw / 2}" height="${ph / 2}" fill="rgba(102,187,106,0.05)"/>
+        <rect x="${midX}" y="${PT}" width="${pw / 2}" height="${ph / 2}" fill="rgba(255,183,77,0.05)"/>
+        <rect x="${PL}" y="${midY}" width="${pw / 2}" height="${ph / 2}" fill="rgba(255,183,77,0.05)"/>
+        <rect x="${midX}" y="${midY}" width="${pw / 2}" height="${ph / 2}" fill="rgba(239,83,80,0.05)"/>
+        <line x1="${midX}" y1="${PT}" x2="${midX}" y2="${PT + ph}" stroke="rgba(201,168,76,0.2)" stroke-dasharray="4,3"/>
+        <line x1="${PL}" y1="${midY}" x2="${PL + pw}" y2="${midY}" stroke="rgba(201,168,76,0.2)" stroke-dasharray="4,3"/>
+        <line x1="${PL}" y1="${PT + ph}" x2="${PL + pw}" y2="${PT + ph}" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
+        <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT + ph}" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
+        <text x="${PL + pw / 2}" y="${H - 10}" text-anchor="middle" fill="#9fb1c6" font-size="11">承傷（右側較高）</text>
+        <text x="14" y="${PT + ph / 2}" text-anchor="middle" fill="#9fb1c6" font-size="11" transform="rotate(-90,14,${PT + ph / 2})">治療（上方較高）</text>
+        <text x="${PL + 8}" y="${PT + 16}" fill="rgba(102,187,106,0.7)" font-size="10">高治療低承傷</text>
+        <text x="${midX + 8}" y="${PT + 16}" fill="rgba(255,183,77,0.7)" font-size="10">高治療高承傷</text>
+        <text x="${PL + 8}" y="${PT + ph - 6}" fill="rgba(255,183,77,0.7)" font-size="10">低治療低承傷</text>
+        <text x="${midX + 8}" y="${PT + ph - 6}" fill="rgba(239,83,80,0.7)" font-size="10">低治療高承傷</text>
+        ${dots}
+      </svg>
+    </div>
+  `
+}
+
 function buildJobTab(rows) {
   const classCount = new Map()
   for (const r of rows) {
@@ -225,11 +277,17 @@ function buildJobTab(rows) {
   }
 
   const classes = [...classCount.keys()].sort((a, b) => classCount.get(b) - classCount.get(a))
-  const filter = state.jobFilter || 'all'
-  const filteredRows = filter === 'all' ? rows : rows.filter((r) => (r.class_name || '未知') === filter)
+  if (!classes.length) {
+    return '<div class="detail-empty">目前沒有職業資料</div>'
+  }
+  if (!state.jobFilter || !classes.includes(state.jobFilter)) {
+    state.jobFilter = classes[0]
+  }
+  const filter = state.jobFilter
+  const filteredRows = rows.filter((r) => (r.class_name || '未知') === filter)
 
-  const metrics = ['kills', 'damage_to_players', 'damage_to_buildings', 'healing', 'damage_taken', 'serious_injuries']
-  const labels = ['擊殺', '輸出', '塔傷', '治療', '承傷', '重傷']
+  const metrics = ['kills', 'damage_to_players', 'damage_to_buildings', 'healing', 'damage_taken', 'serious_injuries', 'feather_spring', 'burning_bone']
+  const labels = ['擊殺', '玩傷', '塔傷', '治療', '承傷', '重傷', '化羽', '焚骨']
   const classAgg = new Map()
   for (const cls of classes) {
     const group = rows.filter((r) => (r.class_name || '未知') === cls)
@@ -240,9 +298,9 @@ function buildJobTab(rows) {
   const maxByMetric = Object.fromEntries(metrics.map((m) => [m, Math.max(...classes.map((c) => classAgg.get(c)[m]), 1)]))
   const buildRadar = (cls) => {
     const n = metrics.length
-    const cx = 54
-    const cy = 54
-    const r = 34
+    const cx = 110
+    const cy = 100
+    const r = 70
     const pts = metrics.map((m, i) => {
       const v = classAgg.get(cls)[m] / maxByMetric[m]
       const a = -Math.PI / 2 + (i * Math.PI * 2) / n
@@ -253,21 +311,25 @@ function buildJobTab(rows) {
         const a = -Math.PI / 2 + (i * Math.PI * 2) / n
         return `${cx + Math.cos(a) * r * s},${cy + Math.sin(a) * r * s}`
       }).join(' ')
-      return `<polygon points="${gp}" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="0.8"/>`
+      return `<polygon points="${gp}" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="1"/>`
     }).join('')
     const spokes = Array.from({ length: n }, (_, i) => {
       const a = -Math.PI / 2 + (i * Math.PI * 2) / n
-      return `<line x1="${cx}" y1="${cy}" x2="${cx + Math.cos(a) * r}" y2="${cy + Math.sin(a) * r}" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>`
+      return `<line x1="${cx}" y1="${cy}" x2="${cx + Math.cos(a) * r}" y2="${cy + Math.sin(a) * r}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`
     }).join('')
-    const poly = `<polygon points="${pts.map((p) => p.join(',')).join(' ')}" fill="rgba(201,168,76,0.2)" stroke="rgba(201,168,76,0.9)" stroke-width="1.2"/>`
-    return `<svg viewBox="0 0 108 108" aria-hidden="true">${ring}${spokes}${poly}</svg>`
+    const labelsSvg = labels.map((label, i) => {
+      const a = -Math.PI / 2 + (i * Math.PI * 2) / n
+      const x = cx + Math.cos(a) * (r + 18)
+      const y = cy + Math.sin(a) * (r + 18)
+      return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" fill="#93a4b7" font-size="10">${label}</text>`
+    }).join('')
+    const poly = `<polygon points="${pts.map((p) => p.join(',')).join(' ')}" fill="rgba(201,168,76,0.2)" stroke="rgba(201,168,76,0.9)" stroke-width="1.6"/>`
+    const dots = pts.map((p) => `<circle cx="${p[0]}" cy="${p[1]}" r="2.8" fill="rgba(201,168,76,0.95)"/>`).join('')
+    return `<svg viewBox="0 0 220 200" aria-hidden="true">${ring}${spokes}${poly}${dots}${labelsSvg}</svg>`
   }
 
   const radarBar = `
     <div class="job-radar-row">
-      <button class="job-filter-btn ${filter === 'all' ? 'active' : ''}" data-job-filter="all">
-        全部 <span class="job-filter-count">${rows.length}</span>
-      </button>
       ${classes.map((cls) => `
         <button class="job-radar-card ${filter === cls ? 'active' : ''}" data-job-filter="${cls}" title="${cls}">
           <div class="job-radar-head">${cls} <span>${classCount.get(cls)}人</span></div>
@@ -282,12 +344,14 @@ function buildJobTab(rows) {
     { label: '#', sortKey: null, render: (_, i) => i + 1 },
     { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
     { label: '職業', sortKey: 'class_name', render: (r) => r.class_name || '—' },
-    { label: '擊敗', sortKey: 'kills', render: (r) => formatNum(r.kills) },
-    { label: '助攻', sortKey: 'assists', render: (r) => formatNum(r.assists) },
-    { label: '輸出', sortKey: 'damage_to_players', render: (r) => formatNum(r.damage_to_players) },
+    { label: '擊殺', sortKey: 'kills', render: (r) => formatNum(r.kills) },
+    { label: '玩傷', sortKey: 'damage_to_players', render: (r) => formatNum(r.damage_to_players) },
     { label: '塔傷', sortKey: 'damage_to_buildings', render: (r) => formatNum(r.damage_to_buildings) },
     { label: '治療', sortKey: 'healing', render: (r) => formatNum(r.healing) },
-    { label: '承傷', sortKey: 'damage_taken', render: (r) => formatNum(r.damage_taken) }
+    { label: '承傷', sortKey: 'damage_taken', render: (r) => formatNum(r.damage_taken) },
+    { label: '重傷', sortKey: 'serious_injuries', render: (r) => formatNum(r.serious_injuries) },
+    { label: '化羽', sortKey: 'feather_spring', render: (r) => formatNum(r.feather_spring) },
+    { label: '焚骨', sortKey: 'burning_bone', render: (r) => formatNum(r.burning_bone) }
   ], filteredRows)
 
   return `${radarBar}${table}`
@@ -336,72 +400,117 @@ function renderContent() {
 
   if (tab === 'eff') {
     const totalBld = rows.reduce((s, r) => s + Number(r.damage_to_buildings || 0), 0) || 1
-    const effRows = rows.map((r) => ({ ...r, bld_pct: Number(r.damage_to_buildings || 0) / totalBld }))
+    const effRows = rows.map((r) => {
+      const bld = Number(r.damage_to_buildings || 0)
+      const taken = Number(r.damage_taken || 0)
+      const heavy = Number(r.serious_injuries || 0)
+      return {
+        ...r,
+        bld_pct: bld / totalBld,
+        bld_per_taken: taken > 0 ? bld / taken : 0,
+        bld_per_heavy: heavy > 0 ? bld / heavy : 0
+      }
+    })
     detailContentEl.innerHTML = buildTable([
       { label: '#', sortKey: null, render: (_, i) => i + 1 },
       { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
       { label: '職業', sortKey: 'class_name', render: (r) => r.class_name || '—' },
       { label: '塔傷', sortKey: 'damage_to_buildings', render: (r) => formatNum(r.damage_to_buildings) },
-      { label: '塔傷佔比', sortKey: 'bld_pct', render: (r) => formatPct(r.bld_pct) }
+      { label: '塔傷佔比', sortKey: 'bld_pct', render: (r) => formatPct(r.bld_pct) },
+      { label: '承受傷害', sortKey: 'damage_taken', render: (r) => formatNum(r.damage_taken) },
+      { label: '塔傷/承傷', sortKey: 'bld_per_taken', render: (r) => (r.damage_taken > 0 ? r.bld_per_taken.toFixed(2) : '—') },
+      { label: '塔傷/重傷', sortKey: 'bld_per_heavy', render: (r) => (r.serious_injuries > 0 ? r.bld_per_heavy.toFixed(2) : '—') }
     ], sortRows(effRows))
     return
   }
 
-  if (tab === 'heal') {
-    const healRows = rows.map((r) => ({ ...r, net_heal: Number(r.healing || 0) - Number(r.damage_taken || 0) }))
-    detailContentEl.innerHTML = buildTable([
-      { label: '#', sortKey: null, render: (_, i) => i + 1 },
-      { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
-      { label: '職業', sortKey: 'class_name', render: (r) => r.class_name || '—' },
-      { label: '治療', sortKey: 'healing', render: (r) => formatNum(r.healing) },
-      { label: '承傷', sortKey: 'damage_taken', render: (r) => formatNum(r.damage_taken) },
-      { label: '淨奶量', sortKey: 'net_heal', render: (r) => formatNum(r.net_heal) }
-    ], sortRows(healRows))
-    return
-  }
-
   if (tab === 'heavy') {
-    const heavyRows = rows.map((r) => ({ ...r, rescue_diff: Number(r.feather_spring || 0) - Number(r.serious_injuries || 0) }))
+    const totalTaken = rows.reduce((s, r) => s + Number(r.damage_taken || 0), 0) || 1
+    const heavyRows = rows.map((r) => {
+      const taken = Number(r.damage_taken || 0)
+      const heavy = Number(r.serious_injuries || 0)
+      return {
+        ...r,
+        taken_pct: taken / totalTaken,
+        taken_per_heavy: heavy > 0 ? taken / heavy : 0
+      }
+    })
     detailContentEl.innerHTML = buildTable([
       { label: '#', sortKey: null, render: (_, i) => i + 1 },
       { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
       { label: '職業', sortKey: 'class_name', render: (r) => r.class_name || '—' },
+      { label: '承受傷害', sortKey: 'damage_taken', render: (r) => formatNum(r.damage_taken) },
+      { label: '承傷佔比', sortKey: 'taken_pct', render: (r) => formatPct(r.taken_pct) },
       { label: '重傷', sortKey: 'serious_injuries', render: (r) => formatNum(r.serious_injuries) },
-      { label: '化羽', sortKey: 'feather_spring', render: (r) => formatNum(r.feather_spring) },
-      { label: '救援差', sortKey: 'rescue_diff', render: (r) => formatNum(r.rescue_diff) }
+      { label: '承傷/重傷', sortKey: 'taken_per_heavy', render: (r) => (r.serious_injuries > 0 ? r.taken_per_heavy.toFixed(2) : '—') },
+      { label: '治療', sortKey: 'healing', render: (r) => formatNum(r.healing) }
     ], sortRows(heavyRows))
     return
   }
 
   if (tab === 'bone') {
-    const boneRows = rows.filter((r) => Number(r.burning_bone || 0) > 0)
-    detailContentEl.innerHTML = buildTable([
+    const enemyRows = state.view === 'a' ? state.grouped.b : state.grouped.a
+    const enemyDeaths = enemyRows.reduce((s, r) => s + Number(r.serious_injuries || 0), 0)
+    const totalBones = rows.reduce((s, r) => s + Number(r.burning_bone || 0), 0)
+    const boneRate = enemyDeaths > 0 ? totalBones / enemyDeaths : 0
+    const boneRows = rows
+      .filter((r) => Number(r.burning_bone || 0) > 0)
+      .map((r) => ({ ...r, bone_ratio: enemyDeaths > 0 ? Number(r.burning_bone || 0) / enemyDeaths : 0 }))
+
+    detailContentEl.innerHTML = `
+      <div class="detail-summary" style="margin-bottom:10px;">
+        <div class="detail-summary-box">對面總死亡次數：<strong>${formatNum(enemyDeaths)}</strong></div>
+        <div class="detail-summary-box">總焚骨次數：<strong>${formatNum(totalBones)}</strong></div>
+        <div class="detail-summary-box">焚骨比例：<strong>${enemyDeaths > 0 ? formatPct(boneRate) : '—'}</strong></div>
+      </div>
+      ${buildTable([
       { label: '#', sortKey: null, render: (_, i) => i + 1 },
       { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
       { label: '職業', sortKey: 'class_name', render: (r) => r.class_name || '—' },
-      { label: '焚骨', sortKey: 'burning_bone', render: (r) => formatNum(r.burning_bone) }
-    ], sortRows(boneRows))
+      { label: '焚骨', sortKey: 'burning_bone', render: (r) => formatNum(r.burning_bone) },
+      { label: '焚骨比例', sortKey: 'bone_ratio', render: (r) => (enemyDeaths > 0 ? formatPct(r.bone_ratio) : '—') },
+      { label: '人傷', sortKey: 'damage_to_players', render: (r) => formatNum(r.damage_to_players) },
+      { label: '塔傷', sortKey: 'damage_to_buildings', render: (r) => formatNum(r.damage_to_buildings) }
+    ], sortRows(boneRows))}
+    `
     return
   }
 
   if (tab === 'suwen') {
     const suwenRows = rows
       .filter((r) => r.class_name === '素問')
-      .map((r) => ({ ...r, rescue_diff: Number(r.feather_spring || 0) - Number(r.serious_injuries || 0) }))
-    detailContentEl.innerHTML = buildTable([
+      .map((r) => ({ ...r }))
+    const totalHeal = rows.reduce((s, r) => s + Number(r.healing || 0), 0)
+    const totalEnemyPvp = (state.view === 'a' ? state.grouped.b : state.grouped.a)
+      .reduce((s, r) => s + Number(r.damage_to_players || 0), 0)
+    const healRateVsEnemyPvp = totalEnemyPvp > 0 ? totalHeal / totalEnemyPvp : 0
+    const totalSuwenHeal = suwenRows.reduce((s, r) => s + Number(r.healing || 0), 0) || 1
+    const suwenTableRows = suwenRows.map((r) => ({
+      ...r,
+      heal_pct: Number(r.healing || 0) / totalSuwenHeal
+    }))
+
+    detailContentEl.innerHTML = `
+      ${buildSuwenQuadrant(suwenRows)}
+      <div class="detail-summary" style="margin-bottom:10px;">
+        <div class="detail-summary-box">對面總人傷：<strong>${formatNum(totalEnemyPvp)}</strong></div>
+        <div class="detail-summary-box">我方總治療：<strong>${formatNum(totalHeal)}</strong></div>
+        <div class="detail-summary-box">治療/對面總人傷：<strong>${totalEnemyPvp > 0 ? formatPct(healRateVsEnemyPvp) : '—'}</strong></div>
+      </div>
+      ${buildTable([
       { label: '#', sortKey: null, render: (_, i) => i + 1 },
       { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
-      { label: '助攻', sortKey: 'assists', render: (r) => formatNum(r.assists) },
       { label: '治療', sortKey: 'healing', render: (r) => formatNum(r.healing) },
-      { label: '承傷', sortKey: 'damage_taken', render: (r) => formatNum(r.damage_taken) },
+      { label: '治療佔比', sortKey: 'heal_pct', render: (r) => formatPct(r.heal_pct) },
       { label: '化羽', sortKey: 'feather_spring', render: (r) => formatNum(r.feather_spring) },
-      { label: '重傷', sortKey: 'serious_injuries', render: (r) => formatNum(r.serious_injuries) },
-      { label: '救援差', sortKey: 'rescue_diff', render: (r) => formatNum(r.rescue_diff) }
-    ], sortRows(suwenRows))
+      { label: '承傷', sortKey: 'damage_taken', render: (r) => formatNum(r.damage_taken) },
+      { label: '重傷', sortKey: 'serious_injuries', render: (r) => formatNum(r.serious_injuries) }
+    ], sortRows(suwenTableRows))}
+    `
     return
   }
 
-  if (tab === 'heatmap' || tab === 'quadrant' || tab === 'cquadrant') {
+  if (tab === 'cquadrant') {
     detailContentEl.innerHTML = buildClassSummaryTable(rows)
     return
   }
@@ -426,7 +535,7 @@ function renderHeader() {
 function handleSortClick(event) {
   const jobBtn = event.target.closest('[data-job-filter]')
   if (jobBtn) {
-    state.jobFilter = jobBtn.dataset.jobFilter || 'all'
+    state.jobFilter = jobBtn.dataset.jobFilter || ''
     renderContent()
     return
   }
@@ -476,6 +585,16 @@ function wireEvents() {
     const tab = btn.dataset.tab
     if (!tab) return
     state.tab = tab
+    if (tab === 'dmg') {
+      state.sortKey = 'damage_to_players'
+      state.sortAsc = false
+    } else if (tab === 'eff') {
+      state.sortKey = 'damage_to_buildings'
+      state.sortAsc = false
+    } else if (tab === 'heavy') {
+      state.sortKey = 'damage_taken'
+      state.sortAsc = false
+    }
     tabsEl.querySelectorAll('.detail-tab').forEach((el) => el.classList.remove('active'))
     btn.classList.add('active')
     renderContent()

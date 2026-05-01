@@ -362,6 +362,9 @@ thead th { background: #1a2432; color: #d3dfec; }
   gap: 4px;
   font-size: 0.8rem;
 }
+.detail-mvp-item.enemy {
+  border-color: rgba(239, 83, 80, 0.35);
+}
 
 .detail-mvp-item strong { color: #d6e8e1; font-size: 0.86rem; }
 .mvp-col { min-width: 0; }
@@ -584,8 +587,8 @@ thead th { background: #1a2432; color: #d3dfec; }
   background: #111b2a;
   color: #c4d0df;
   border-radius: 10px;
-  padding: 8px;
-  width: 128px;
+  padding: 10px;
+  width: 248px;
   display: grid;
   gap: 6px;
 }
@@ -606,7 +609,7 @@ thead th { background: #1a2432; color: #d3dfec; }
 }
 
 .job-radar-head {
-  font-size: 0.76rem;
+  font-size: 0.88rem;
   display: flex;
   justify-content: space-between;
   gap: 6px;
