@@ -308,7 +308,7 @@ tbody tr:hover td { background: rgba(79, 195, 247, 0.08); }
 
 .player-detail-top {
   display: grid;
-  grid-template-columns: minmax(300px, 380px) 1fr;
+  grid-template-columns: minmax(380px, 500px) minmax(420px, 1fr);
   gap: 10px;
   min-height: 460px;
 }
@@ -327,12 +327,29 @@ tbody tr:hover td { background: rgba(79, 195, 247, 0.08); }
   background: #111b2a;
   padding: 8px;
   overflow: hidden;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.1s ease;
+}
+
+.player-trend-card:hover {
+  border-color: rgba(201, 168, 76, 0.45);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
 }
 
 .player-trend-title {
   font-size: 0.86rem;
   color: #d8c889;
   margin-bottom: 6px;
+}
+
+#playerRadarPanel,
+.player-detail-layout .detail-panel {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+#playerRadarPanel:hover,
+.player-detail-layout .detail-panel:hover {
+  border-color: rgba(201, 168, 76, 0.38);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
 }
 
 .player-trend-tip {

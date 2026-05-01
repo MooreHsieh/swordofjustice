@@ -83,11 +83,11 @@ async function onLogout() {
 
 function buildRadarSvg(target, allRows) {
   const n = RADAR_METRICS.length
-  const W = 300
-  const H = 270
-  const cx = 150
-  const cy = 132
-  const r = 92
+  const W = 360
+  const H = 280
+  const cx = 180
+  const cy = 140
+  const r = 108
 
   const avgByMetric = (row, key) => safeDiv(row[key], row.matches) || 0
   const maxByMetric = Object.fromEntries(
@@ -117,12 +117,12 @@ function buildRadarSvg(target, allRows) {
   const poly = `<polygon points="${pts.map((p) => p.join(',')).join(' ')}" fill="rgba(201,168,76,0.22)" stroke="rgba(201,168,76,0.95)" stroke-width="2"/>`
   const dots = pts.map((p) => `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="rgba(201,168,76,1)"/>`).join('')
   const labels = RADAR_METRICS.map((m, i) => {
-    const p = toPoint(i, 1.16)
+    const p = toPoint(i, 1.12)
     return `<text x="${p[0]}" y="${p[1]}" text-anchor="middle" dominant-baseline="middle" fill="#9fb1c6" font-size="11">${m.label}</text>`
   }).join('')
 
   return `
-    <svg viewBox="0 0 ${W} ${H}" style="display:block;width:100%;height:auto;max-width:340px;">
+    <svg viewBox="0 0 ${W} ${H}" style="display:block;width:100%;height:auto;max-width:460px;">
       ${ring}${spokes}${poly}${dots}${labels}
     </svg>
   `
