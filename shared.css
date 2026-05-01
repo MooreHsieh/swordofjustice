@@ -288,6 +288,27 @@ thead th { background: #1a2432; color: #d3dfec; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.vs-divider { color: #8fa0b5; font-weight: 700; margin: 0 4px; }
+.vs-count { color: #b7c4d3; font-weight: 600; font-size: 0.9em; }
+.vs-win-crown {
+  width: 1rem;
+  height: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 5px;
+  color: #e8d080;
+  vertical-align: text-bottom;
+}
+.vs-win-crown svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: rgba(201, 168, 76, 0.15);
+}
 .detail-top-actions { display: flex; gap: 8px; align-items: center; }
 
 .detail-app {
@@ -338,11 +359,49 @@ thead th { background: #1a2432; color: #d3dfec; }
   border-radius: 8px;
   padding: 7px 8px;
   display: grid;
-  gap: 2px;
+  gap: 4px;
   font-size: 0.8rem;
 }
 
 .detail-mvp-item strong { color: #d6e8e1; font-size: 0.86rem; }
+.mvp-col { min-width: 0; }
+.mvp-col-label { color: #b8c5d4; white-space: nowrap; }
+.mvp-row2 {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 8px;
+}
+.mvp-col-name {
+  color: #e8edf3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mvp-col-val { white-space: nowrap; text-align: right; }
+
+.mvp-ic {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 4px;
+  border: 1px solid rgba(201, 168, 76, 0.26);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  color: #c9b989;
+  background: rgba(201, 168, 76, 0.06);
+  vertical-align: text-bottom;
+}
+
+.mvp-ic svg {
+  width: 0.72rem;
+  height: 0.72rem;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 .detail-main {
   padding: 16px;
@@ -373,12 +432,43 @@ thead th { background: #1a2432; color: #d3dfec; }
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .detail-tab.active {
   border-color: #22a78a;
   background: rgba(34, 167, 138, 0.16);
   color: #d3f6eb;
+}
+
+.tab-ic {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 4px;
+  border: 1px solid rgba(201, 168, 76, 0.28);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #b7a879;
+  background: rgba(201, 168, 76, 0.06);
+  flex-shrink: 0;
+}
+
+.tab-ic svg {
+  width: 0.8rem;
+  height: 0.8rem;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.detail-tab.active .tab-ic {
+  border-color: rgba(201, 168, 76, 0.55);
+  color: #e8d080;
+  background: rgba(201, 168, 76, 0.16);
 }
 
 .detail-search {
@@ -444,6 +534,94 @@ thead th { background: #1a2432; color: #d3dfec; }
   color: #68768a;
   margin-left: 4px;
   font-size: 0.75rem;
+}
+
+.job-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.job-radar-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  align-items: stretch;
+}
+
+.job-filter-btn {
+  border: 1px solid var(--border);
+  background: #111b2a;
+  color: #c4d0df;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.job-filter-btn:hover {
+  border-color: #c9a84c;
+  color: #e8d080;
+}
+
+.job-filter-btn.active {
+  border-color: #c9a84c;
+  background: rgba(201, 168, 76, 0.14);
+  color: #f0dfaa;
+}
+
+.job-filter-count {
+  font-size: 0.72rem;
+  color: #9fb1c6;
+}
+
+.job-radar-card {
+  border: 1px solid var(--border);
+  background: #111b2a;
+  color: #c4d0df;
+  border-radius: 10px;
+  padding: 8px;
+  width: 128px;
+  display: grid;
+  gap: 6px;
+}
+
+.job-radar-card:hover {
+  border-color: #c9a84c;
+}
+
+.job-radar-card.active {
+  border-color: #c9a84c;
+  background: rgba(201, 168, 76, 0.12);
+}
+
+.job-radar-card svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.job-radar-head {
+  font-size: 0.76rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  color: #d8e1eb;
+}
+
+.job-radar-head span {
+  color: #9fb1c6;
+  font-size: 0.7rem;
+}
+
+.job-radar-legend {
+  font-size: 0.72rem;
+  color: #93a4b7;
+  margin: 2px 0 10px;
 }
 
 .detail-empty {

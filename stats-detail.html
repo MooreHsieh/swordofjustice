@@ -21,7 +21,6 @@
 
   <div class="detail-app">
     <aside class="detail-sidebar">
-      <div class="detail-sb-title">場次</div>
       <button class="detail-nav-btn active" data-view="a" id="viewBtnA">🔵 我方</button>
       <button class="detail-nav-btn" data-view="b" id="viewBtnB">🔴 對方</button>
       <div class="detail-mvp-box">
@@ -34,21 +33,19 @@
       <section class="detail-toolbar">
         <div id="detailTabs">
           <div class="detail-tabs">
-            <button class="detail-tab active" data-tab="overview">📊 總覽</button>
-            <button class="detail-tab" data-tab="job">🎭 職業</button>
-            <button class="detail-tab" data-tab="kill">⚔ 擊殺</button>
-            <button class="detail-tab" data-tab="dmg">🔥 輸出</button>
-            <button class="detail-tab" data-tab="eff">⚡ 效率</button>
-            <button class="detail-tab" data-tab="heal">💚 治療</button>
-            <button class="detail-tab" data-tab="heavy">💀 重傷</button>
-            <button class="detail-tab" data-tab="bone">🔥 焚骨</button>
-            <button class="detail-tab" data-tab="suwen">🩷 素問</button>
+            <button class="detail-tab active" data-tab="overview"><span class="tab-ic"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="10" width="3" height="7" rx="1"/><rect x="8.5" y="6" width="3" height="11" rx="1"/><rect x="14" y="3" width="3" height="14" rx="1"/></svg></span>總覽</button>
+            <button class="detail-tab" data-tab="job"><span class="tab-ic"><svg viewBox="0 0 20 20" fill="none"><path d="M6 16v-2.5A3.5 3.5 0 0 1 9.5 10h1A3.5 3.5 0 0 1 14 13.5V16"/><circle cx="10" cy="6.5" r="2.5"/><path d="M3 14.5A2.5 2.5 0 0 1 5.5 12M17 14.5A2.5 2.5 0 0 0 14.5 12"/></svg></span>職業</button>
+            <button class="detail-tab" data-tab="dmg"><span class="tab-ic"><svg viewBox="0 0 20 20" fill="none"><path d="M10 3c1.2 2 .7 3.3-.1 4.4-.5.7-.8 1.4-.4 2.3.5 1.1 1.7 1.7 2.6 2.8.9 1.2 1.2 2.9.2 4.5"/><path d="M8.5 8.5c-1.6 1-3 2.3-3 4.5A4.5 4.5 0 0 0 10 17.5"/></svg></span>人傷</button>
+            <button class="detail-tab" data-tab="eff"><span class="tab-ic"><svg viewBox="0 0 20 20" fill="none"><path d="M11.5 2.5 6 11h4l-1.5 6.5L14 9h-4l1.5-6.5Z"/></svg></span>塔傷</button>
+            <button class="detail-tab" data-tab="heal"><span class="tab-ic"><svg viewBox="0 0 20 20" fill="none"><path d="M10 16.8 4.6 11.6a3.6 3.6 0 0 1 5.1-5l.3.3.3-.3a3.6 3.6 0 1 1 5.1 5Z"/></svg></span>治療</button>
+            <button class="detail-tab" data-tab="heavy"><span class="tab-ic"><svg viewBox="0 0 20 20" fill="none"><path d="M6 16.5h8"/><path d="M7.2 14.5 10 12.2l2.8 2.3"/><path d="M8 8.5a2 2 0 1 1 4 0c0 1.3-.8 2-2 2s-2-.7-2-2Z"/><path d="M6.2 6.5a4 4 0 0 1 7.6 0"/></svg></span>重傷</button>
+            <button class="detail-tab" data-tab="bone"><span class="tab-ic"><svg viewBox="0 0 20 20" fill="none"><path d="M6.5 6.5a1.8 1.8 0 1 1 2.6-2.6l5.4 5.4a1.8 1.8 0 1 1-2.6 2.6Z"/><path d="M5 9.5a1.6 1.6 0 1 1-2.3-2.3M15 10.5a1.6 1.6 0 1 0 2.3 2.3"/></svg></span>焚骨</button>
+            <button class="detail-tab" data-tab="suwen"><span class="tab-ic"><svg viewBox="0 0 20 20" fill="none"><path d="M10 16.8 4.6 11.6a3.6 3.6 0 0 1 5.1-5l.3.3.3-.3a3.6 3.6 0 1 1 5.1 5Z"/><path d="M10 8v5M7.5 10.5h5"/></svg></span>素問</button>
           </div>
           <div class="detail-tabs detail-tabs-advanced">
-            <button class="detail-tab" data-tab="radar">📡 職業雷達</button>
-            <button class="detail-tab" data-tab="heatmap">🌡 貢獻熱力</button>
-            <button class="detail-tab" data-tab="quadrant">🎯 素問象限</button>
-            <button class="detail-tab" data-tab="cquadrant">🔀 自選象限</button>
+            <button class="detail-tab" data-tab="heatmap"><span class="tab-ic"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg></span>貢獻熱力</button>
+            <button class="detail-tab" data-tab="quadrant"><span class="tab-ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5v13M3.5 10h13"/><circle cx="12.8" cy="7.2" r="1.3"/></svg></span>素問象限</button>
+            <button class="detail-tab" data-tab="cquadrant"><span class="tab-ic"><svg viewBox="0 0 20 20" fill="none"><path d="M4 6h9"/><path d="m10 3 3 3-3 3"/><path d="M16 14H7"/><path d="m10 11-3 3 3 3"/></svg></span>自選象限</button>
           </div>
         </div>
         <input id="playerSearch" class="detail-search" type="text" placeholder="🔍 搜尋玩家">
