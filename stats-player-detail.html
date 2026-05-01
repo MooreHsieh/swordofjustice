@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>有夢最美｜個人詳細資訊</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="stylesheet" href="./shared.css">
+</head>
+<body class="totals-page">
+  <header class="totals-top-header">
+    <a class="detail-home" href="./stats-totals.html">⌂</a>
+    <div class="totals-head-left">
+      <h1 id="playerTitle">個人詳細資訊</h1>
+    </div>
+    <div class="topbar-actions">
+      <button id="logoutBtn" class="danger" type="button">登出</button>
+    </div>
+  </header>
+
+  <main class="totals-main">
+    <section class="totals-content player-detail-layout">
+      <section class="player-detail-top">
+        <section class="detail-panel" id="playerRadarPanel">
+          <h3>數據雷達圖</h3>
+          <div id="playerRadarWrap" style="overflow:auto;"></div>
+        </section>
+        <section class="detail-panel">
+          <h3>各項數據表現趨勢</h3>
+          <div id="playerTrendWrap" class="player-trend-scroll"></div>
+        </section>
+      </section>
+      <section class="detail-panel">
+        <h3>統計摘要</h3>
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>項目</th>
+                <th>總和</th>
+                <th>平均</th>
+              </tr>
+            </thead>
+            <tbody id="playerSummaryBody">
+              <tr><td colspan="3">載入中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+    <div id="status" aria-live="polite"></div>
+  </main>
+
+  <script src="./config.js"></script>
+  <script type="module" src="./stats-player-detail.js"></script>
+  <div id="playerTrendTip" class="player-trend-tip" style="display:none;"></div>
+</body>
+</html>

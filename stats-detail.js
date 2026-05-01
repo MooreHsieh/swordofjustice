@@ -76,7 +76,10 @@ function renderContent() {
 }
 
 function applyTabDefaultSort(tab) {
-  if (tab === 'dmg') {
+  if (tab === 'overview') {
+    state.sortKey = 'kills'
+    state.sortAsc = false
+  } else if (tab === 'dmg') {
     state.sortKey = 'damage_to_players'
     state.sortAsc = false
   } else if (tab === 'eff') {

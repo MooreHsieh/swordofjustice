@@ -8,13 +8,13 @@ export function buildSidebarCompareHtml(grouped, league) {
   const guildB = league?.guild_b || '對方'
   const metrics = [
     { key: 'kills', label: '擊殺' },
-    { key: 'assists', label: '助攻' },
     { key: 'damage_to_players', label: '人傷' },
     { key: 'damage_to_buildings', label: '塔傷' },
-    { key: 'healing', label: '治療' },
-    { key: 'damage_taken', label: '承傷' },
     { key: 'serious_injuries', label: '重傷' },
+    { key: 'damage_taken', label: '承傷' },
+    { key: 'healing', label: '治療' },
     { key: 'feather_spring', label: '化羽' },
+    { key: 'burning_bone', label: '焚骨' },
   ]
   const sumBy = (rows, key) => rows.reduce((s, r) => s + Number(r[key] || 0), 0)
   const aVals = metrics.map((m) => sumBy(aRows, m.key))
@@ -116,7 +116,7 @@ export function computeMvp(rows, sortKey = 'kills', sortAsc = false) {
   return [
     { icon: svg.kills, label: '擊殺王', key: 'kills' },
     { icon: svg.assists, label: '助攻王', key: 'assists' },
-    { icon: svg.damage_to_players, label: '輸出王', key: 'damage_to_players' },
+    { icon: svg.damage_to_players, label: '人傷王', key: 'damage_to_players' },
     { icon: svg.damage_to_buildings, label: '塔傷王', key: 'damage_to_buildings' },
     { icon: svg.damage_taken, label: '承傷王', key: 'damage_taken' },
     { icon: svg.healing, label: '治療王', key: 'healing' },
@@ -343,7 +343,7 @@ function buildJobTab(rows, state) {
   const filteredRows = rows.filter((r) => (r.class_name || '未知') === filter)
 
   const metrics = ['kills', 'damage_to_players', 'damage_to_buildings', 'serious_injuries', 'damage_taken', 'healing', 'feather_spring', 'burning_bone']
-  const labels = ['擊殺', '玩傷', '塔傷', '重傷', '承傷', '治療', '化羽', '焚骨']
+  const labels = ['擊殺', '人傷', '塔傷', '重傷', '承傷', '治療', '化羽', '焚骨']
   const classAgg = new Map()
   for (const cls of classes) {
     const group = rows.filter((r) => (r.class_name || '未知') === cls)
@@ -397,7 +397,7 @@ function buildJobTab(rows, state) {
     { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
     { label: '職業', sortKey: 'class_name', render: (r) => r.class_name || '—' },
     { label: '擊殺', sortKey: 'kills', render: (r) => formatNum(r.kills) },
-    { label: '玩傷', sortKey: 'damage_to_players', render: (r) => formatNum(r.damage_to_players) },
+    { label: '人傷', sortKey: 'damage_to_players', render: (r) => formatNum(r.damage_to_players) },
     { label: '塔傷', sortKey: 'damage_to_buildings', render: (r) => formatNum(r.damage_to_buildings) },
     { label: '治療', sortKey: 'healing', render: (r) => formatNum(r.healing) },
     { label: '承傷', sortKey: 'damage_taken', render: (r) => formatNum(r.damage_taken) },
@@ -444,7 +444,7 @@ export function renderTabContent(tab, rows, state, grouped) {
     }
     return `
       <div class="detail-table-wrap"><table class="detail-table"><thead><tr>
-      <th>#</th>${th('玩家', 'player_name')}${th('職業', 'class_name')}${th('擊敗', 'kills')}${th('助攻', 'assists')}${th('輸出', 'damage_to_players')}${th('塔傷', 'damage_to_buildings')}${th('治療', 'healing')}${th('承傷', 'damage_taken')}${th('重傷', 'serious_injuries')}${th('化羽', 'feather_spring')}${th('焚骨', 'burning_bone')}${th('資源', 'resources')}
+      <th>#</th>${th('玩家', 'player_name')}${th('職業', 'class_name')}${th('擊敗', 'kills')}${th('助攻', 'assists')}${th('人傷', 'damage_to_players')}${th('塔傷', 'damage_to_buildings')}${th('治療', 'healing')}${th('承傷', 'damage_taken')}${th('重傷', 'serious_injuries')}${th('化羽', 'feather_spring')}${th('焚骨', 'burning_bone')}${th('資源', 'resources')}
       </tr></thead><tbody>
       ${sortedRows.length ? sortedRows.map((r, idx) => `<tr><td>${idx + 1}</td><td>${r.player_name || '—'}</td><td>${r.class_name || '—'}</td>${buildOverviewHeatCell(r.kills, maxMap.kills)}${buildOverviewHeatCell(r.assists, maxMap.assists)}${buildOverviewHeatCell(r.damage_to_players, maxMap.damage_to_players)}${buildOverviewHeatCell(r.damage_to_buildings, maxMap.damage_to_buildings)}${buildOverviewHeatCell(r.healing, maxMap.healing)}${buildOverviewHeatCell(r.damage_taken, maxMap.damage_taken)}${buildOverviewHeatCell(r.serious_injuries, maxMap.serious_injuries)}${buildOverviewHeatCell(r.feather_spring, maxMap.feather_spring)}${buildOverviewHeatCell(r.burning_bone, maxMap.burning_bone)}${buildOverviewHeatCell(r.resources, maxMap.resources)}</tr>`).join('') : '<tr><td colspan="13" class="detail-empty">無符合資料</td></tr>'}
       </tbody></table></div>`
