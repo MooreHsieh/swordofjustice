@@ -12,7 +12,6 @@
     <a class="detail-home" href="./stats.html">⌂</a>
     <div class="detail-top-vs">
       <div class="detail-vs-line" id="detailVsLine">讀取中...</div>
-      <div class="detail-vs-meta" id="detailMetaLine">—</div>
     </div>
     <div class="detail-top-actions">
       <a class="nav-btn" href="./stats.html">返回聯賽清單</a>
@@ -32,17 +31,25 @@
     </aside>
 
     <main class="detail-main">
-      <section class="detail-main-head">
-        <div>
-          <h1 id="leagueTitle">聯賽細節</h1>
-          <p id="status" aria-live="polite">資料讀取中...</p>
-        </div>
-      </section>
-
       <section class="detail-toolbar">
-        <div class="detail-tabs" id="detailTabs">
-          <button class="detail-tab active" data-tab="overview">📊 總覽</button>
-          <button class="detail-tab" data-tab="charts">📈 圖表</button>
+        <div id="detailTabs">
+          <div class="detail-tabs">
+            <button class="detail-tab active" data-tab="overview">📊 總覽</button>
+            <button class="detail-tab" data-tab="job">🎭 職業</button>
+            <button class="detail-tab" data-tab="kill">⚔ 擊殺</button>
+            <button class="detail-tab" data-tab="dmg">🔥 輸出</button>
+            <button class="detail-tab" data-tab="eff">⚡ 效率</button>
+            <button class="detail-tab" data-tab="heal">💚 治療</button>
+            <button class="detail-tab" data-tab="heavy">💀 重傷</button>
+            <button class="detail-tab" data-tab="bone">🔥 焚骨</button>
+            <button class="detail-tab" data-tab="suwen">🩷 素問</button>
+          </div>
+          <div class="detail-tabs detail-tabs-advanced">
+            <button class="detail-tab" data-tab="radar">📡 職業雷達</button>
+            <button class="detail-tab" data-tab="heatmap">🌡 貢獻熱力</button>
+            <button class="detail-tab" data-tab="quadrant">🎯 素問象限</button>
+            <button class="detail-tab" data-tab="cquadrant">🔀 自選象限</button>
+          </div>
         </div>
         <input id="playerSearch" class="detail-search" type="text" placeholder="🔍 搜尋玩家">
       </section>
@@ -50,6 +57,7 @@
       <section id="detailContent" class="detail-content"></section>
     </main>
   </div>
+  <div id="status" aria-live="polite" style="display:none"></div>
   <script src="./config.js"></script>
   <script type="module" src="./stats-detail.js"></script>
 </body>

@@ -1,9 +1,7 @@
 import { supabase } from './supabase-client.js'
 
 const statusEl = document.querySelector('#status')
-const leagueTitleEl = document.querySelector('#leagueTitle')
 const detailVsLineEl = document.querySelector('#detailVsLine')
-const detailMetaLineEl = document.querySelector('#detailMetaLine')
 const logoutBtn = document.querySelector('#logoutBtn')
 const viewBtnA = document.querySelector('#viewBtnA')
 const viewBtnB = document.querySelector('#viewBtnB')
@@ -24,6 +22,7 @@ const state = {
 }
 
 function setStatus(message, isError = false) {
+  if (!statusEl) return
   statusEl.textContent = message
   statusEl.style.color = isError ? '#ff8f89' : '#9aa8ba'
 }
@@ -147,73 +146,183 @@ function buildOverviewTable(rows) {
   `
 }
 
-function renderBarChart(items, unit = '') {
-  if (!items.length) return '<div class="detail-empty">尚無資料</div>'
-  const maxValue = Math.max(...items.map((i) => i.value), 1)
+function tableHeader(label, key) {
+  if (!key) return `<th>${label}</th>`
+  const active = state.sortKey === key
+  const arrow = active ? (state.sortAsc ? '↑' : '↓') : '↕'
+  return `<th class="detail-sort" data-key="${key}">${label}<span>${arrow}</span></th>`
+}
+
+function buildTable(columns, rows) {
+  const body = rows.length
+    ? rows.map((row, idx) => `
+      <tr>
+        ${columns.map((col) => `<td>${col.render ? col.render(row, idx) : formatNum(row[col.key])}</td>`).join('')}
+      </tr>
+    `).join('')
+    : `<tr><td colspan="${columns.length}" class="detail-empty">無符合資料</td></tr>`
+
   return `
-    <div class="detail-chart-list">
-      ${items
-        .map((item) => {
-          const width = Math.max(4, Math.round((item.value / maxValue) * 100))
-          return `
-            <div class="detail-chart-row">
-              <span>${item.label}</span>
-              <div class="detail-chart-bar-wrap"><div class="detail-chart-bar" style="width:${width}%"></div></div>
-              <span>${formatNum(item.value)}${unit}</span>
-            </div>
-          `
-        })
-        .join('')}
+    <div class="detail-table-wrap">
+      <table class="detail-table">
+        <thead><tr>${columns.map((col) => tableHeader(col.label, col.sortKey)).join('')}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
     </div>
   `
 }
 
-function buildCharts(rows) {
-  const guildMap = new Map()
-  const classMap = new Map()
+function buildClassSummaryTable(rows) {
+  const byClass = new Map()
   for (const r of rows) {
-    guildMap.set(r.guild_name || '未知', (guildMap.get(r.guild_name || '未知') || 0) + (r.kills || 0) + (r.assists || 0))
-    classMap.set(r.class_name || '未知', (classMap.get(r.class_name || '未知') || 0) + 1)
+    const cls = r.class_name || '未知'
+    if (!byClass.has(cls)) byClass.set(cls, { class_name: cls, players: 0, kills: 0, assists: 0, damage_to_players: 0, healing: 0 })
+    const agg = byClass.get(cls)
+    agg.players += 1
+    agg.kills += Number(r.kills || 0)
+    agg.assists += Number(r.assists || 0)
+    agg.damage_to_players += Number(r.damage_to_players || 0)
+    agg.healing += Number(r.healing || 0)
   }
-
-  const guildItems = Array.from(guildMap.entries())
-    .map(([label, value]) => ({ label, value }))
-    .sort((a, b) => b.value - a.value)
-  const classItems = Array.from(classMap.entries())
-    .map(([label, value]) => ({ label, value }))
-    .sort((a, b) => b.value - a.value)
-
+  const classRows = [...byClass.values()].sort((a, b) => b.damage_to_players - a.damage_to_players)
   return `
-    <div class="detail-grid-2">
-      <div class="detail-panel">
-        <h3>幫會戰績排行（擊敗+助攻）</h3>
-        ${renderBarChart(guildItems)}
-      </div>
-      <div class="detail-panel">
-        <h3>職業分佈（參戰人次）</h3>
-        ${renderBarChart(classItems, '人')}
-      </div>
-    </div>
+    <div class="detail-summary-box" style="margin-bottom:10px">職業分佈：${classRows.map((r) => `${r.class_name} ${r.players}人`).join(' ・ ') || '—'}</div>
+    ${buildTable([
+      { label: '職業', sortKey: 'class_name', render: (r) => r.class_name },
+      { label: '人數', sortKey: null, render: (r) => formatNum(r.players) },
+      { label: '總擊敗', sortKey: null, render: (r) => formatNum(r.kills) },
+      { label: '總助攻', sortKey: null, render: (r) => formatNum(r.assists) },
+      { label: '總輸出', sortKey: null, render: (r) => formatNum(r.damage_to_players) },
+      { label: '總治療', sortKey: null, render: (r) => formatNum(r.healing) }
+    ], classRows)}
   `
 }
 
 function renderContent() {
-  const rows = state.grouped[state.view]
+  const rawRows = state.grouped[state.view]
+  const filteredRows = rawRows.filter((r) =>
+    String(r.player_name || '').toLowerCase().includes(state.search.toLowerCase())
+  )
+  const rows = sortRows(filteredRows)
   const summary = `
     <div class="detail-summary">
       <div class="detail-summary-box">玩家數：<strong>${rows.length}</strong></div>
-      <div class="detail-summary-box">總擊敗：<strong>${formatNum(rows.reduce((s, r) => s + (r.kills || 0), 0))}</strong></div>
-      <div class="detail-summary-box">總助攻：<strong>${formatNum(rows.reduce((s, r) => s + (r.assists || 0), 0))}</strong></div>
-      <div class="detail-summary-box">總重傷：<strong>${formatNum(rows.reduce((s, r) => s + (r.serious_injuries || 0), 0))}</strong></div>
-      <div class="detail-summary-box">總化羽：<strong>${formatNum(rows.reduce((s, r) => s + (r.feather_spring || 0), 0))}</strong></div>
-      <div class="detail-summary-box">總焚骨：<strong>${formatNum(rows.reduce((s, r) => s + (r.burning_bone || 0), 0))}</strong></div>
+      <div class="detail-summary-box">總擊敗：<strong>${formatNum(rows.reduce((s, r) => s + Number(r.kills || 0), 0))}</strong></div>
+      <div class="detail-summary-box">總助攻：<strong>${formatNum(rows.reduce((s, r) => s + Number(r.assists || 0), 0))}</strong></div>
+      <div class="detail-summary-box">總重傷：<strong>${formatNum(rows.reduce((s, r) => s + Number(r.serious_injuries || 0), 0))}</strong></div>
+      <div class="detail-summary-box">總化羽：<strong>${formatNum(rows.reduce((s, r) => s + Number(r.feather_spring || 0), 0))}</strong></div>
+      <div class="detail-summary-box">總焚骨：<strong>${formatNum(rows.reduce((s, r) => s + Number(r.burning_bone || 0), 0))}</strong></div>
     </div>
   `
 
-  if (state.tab === 'charts') {
-    detailContentEl.innerHTML = `${summary}${buildCharts(rows)}`
-  } else {
+  const tab = state.tab
+  if (tab === 'overview') {
     detailContentEl.innerHTML = `${summary}${buildOverviewTable(rows)}`
+    return
+  }
+
+  if (tab === 'job') {
+    detailContentEl.innerHTML = `${summary}${buildClassSummaryTable(rows)}`
+    return
+  }
+
+  if (tab === 'kill') {
+    detailContentEl.innerHTML = `${summary}${buildTable([
+      { label: '#', sortKey: null, render: (_, i) => i + 1 },
+      { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
+      { label: '職業', sortKey: 'class_name', render: (r) => r.class_name || '—' },
+      { label: '擊敗', sortKey: 'kills', render: (r) => formatNum(r.kills) },
+      { label: '助攻', sortKey: 'assists', render: (r) => formatNum(r.assists) },
+      { label: 'K+A', sortKey: null, render: (r) => formatNum(Number(r.kills || 0) + Number(r.assists || 0)) },
+      { label: '資源', sortKey: 'resources', render: (r) => formatNum(r.resources) }
+    ], rows)}`
+    return
+  }
+
+  if (tab === 'dmg') {
+    detailContentEl.innerHTML = `${summary}${buildTable([
+      { label: '#', sortKey: null, render: (_, i) => i + 1 },
+      { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
+      { label: '職業', sortKey: 'class_name', render: (r) => r.class_name || '—' },
+      { label: '輸出', sortKey: 'damage_to_players', render: (r) => formatNum(r.damage_to_players) },
+      { label: '塔傷', sortKey: 'damage_to_buildings', render: (r) => formatNum(r.damage_to_buildings) }
+    ], rows)}`
+    return
+  }
+
+  if (tab === 'eff') {
+    const effRows = rows.map((r) => ({
+      ...r,
+      kill_eff: Number(r.kills || 0) > 0 ? Number(r.damage_to_players || 0) / Number(r.kills || 0) : 0
+    }))
+    detailContentEl.innerHTML = `${summary}${buildTable([
+      { label: '#', sortKey: null, render: (_, i) => i + 1 },
+      { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
+      { label: '職業', sortKey: 'class_name', render: (r) => r.class_name || '—' },
+      { label: '擊殺效率', sortKey: 'kill_eff', render: (r) => r.kill_eff ? formatNum(Math.round(r.kill_eff)) : '—' },
+      { label: '重傷', sortKey: 'serious_injuries', render: (r) => formatNum(r.serious_injuries) },
+      { label: '化羽', sortKey: 'feather_spring', render: (r) => formatNum(r.feather_spring) }
+    ], sortRows(effRows))}`
+    return
+  }
+
+  if (tab === 'heal') {
+    const healRows = rows.map((r) => ({ ...r, net_heal: Number(r.healing || 0) - Number(r.damage_taken || 0) }))
+    detailContentEl.innerHTML = `${summary}${buildTable([
+      { label: '#', sortKey: null, render: (_, i) => i + 1 },
+      { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
+      { label: '職業', sortKey: 'class_name', render: (r) => r.class_name || '—' },
+      { label: '治療', sortKey: 'healing', render: (r) => formatNum(r.healing) },
+      { label: '承傷', sortKey: 'damage_taken', render: (r) => formatNum(r.damage_taken) },
+      { label: '淨奶量', sortKey: 'net_heal', render: (r) => formatNum(r.net_heal) }
+    ], sortRows(healRows))}`
+    return
+  }
+
+  if (tab === 'heavy') {
+    const heavyRows = rows.map((r) => ({ ...r, rescue_diff: Number(r.feather_spring || 0) - Number(r.serious_injuries || 0) }))
+    detailContentEl.innerHTML = `${summary}${buildTable([
+      { label: '#', sortKey: null, render: (_, i) => i + 1 },
+      { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
+      { label: '職業', sortKey: 'class_name', render: (r) => r.class_name || '—' },
+      { label: '重傷', sortKey: 'serious_injuries', render: (r) => formatNum(r.serious_injuries) },
+      { label: '化羽', sortKey: 'feather_spring', render: (r) => formatNum(r.feather_spring) },
+      { label: '救援差', sortKey: 'rescue_diff', render: (r) => formatNum(r.rescue_diff) }
+    ], sortRows(heavyRows))}`
+    return
+  }
+
+  if (tab === 'bone') {
+    const boneRows = rows.filter((r) => Number(r.burning_bone || 0) > 0)
+    detailContentEl.innerHTML = `${summary}${buildTable([
+      { label: '#', sortKey: null, render: (_, i) => i + 1 },
+      { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
+      { label: '職業', sortKey: 'class_name', render: (r) => r.class_name || '—' },
+      { label: '焚骨', sortKey: 'burning_bone', render: (r) => formatNum(r.burning_bone) }
+    ], sortRows(boneRows))}`
+    return
+  }
+
+  if (tab === 'suwen') {
+    const suwenRows = rows
+      .filter((r) => r.class_name === '素問')
+      .map((r) => ({ ...r, rescue_diff: Number(r.feather_spring || 0) - Number(r.serious_injuries || 0) }))
+    detailContentEl.innerHTML = `${summary}${buildTable([
+      { label: '#', sortKey: null, render: (_, i) => i + 1 },
+      { label: '玩家', sortKey: 'player_name', render: (r) => r.player_name || '—' },
+      { label: '助攻', sortKey: 'assists', render: (r) => formatNum(r.assists) },
+      { label: '治療', sortKey: 'healing', render: (r) => formatNum(r.healing) },
+      { label: '承傷', sortKey: 'damage_taken', render: (r) => formatNum(r.damage_taken) },
+      { label: '化羽', sortKey: 'feather_spring', render: (r) => formatNum(r.feather_spring) },
+      { label: '重傷', sortKey: 'serious_injuries', render: (r) => formatNum(r.serious_injuries) },
+      { label: '救援差', sortKey: 'rescue_diff', render: (r) => formatNum(r.rescue_diff) }
+    ], sortRows(suwenRows))}`
+    return
+  }
+
+  if (tab === 'radar' || tab === 'heatmap' || tab === 'quadrant' || tab === 'cquadrant') {
+    detailContentEl.innerHTML = `${summary}${buildClassSummaryTable(rows)}`
+    return
   }
 }
 
@@ -221,9 +330,7 @@ function renderHeader() {
   const league = state.league
   const guildA = league.guild_a || '我方'
   const guildB = league.guild_b || '對方'
-  detailVsLineEl.textContent = `${guildA} VS ${guildB}`
-  detailMetaLineEl.textContent = `${league.match_date} ・ 第 ${league.round_no} 場`
-  leagueTitleEl.textContent = `${guildA} vs ${guildB}`
+  detailVsLineEl.textContent = `${guildA} VS ${guildB}　${league.match_date} ・ 第 ${league.round_no} 場`
 }
 
 function handleSortClick(event) {
