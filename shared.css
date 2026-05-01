@@ -286,6 +286,15 @@ tbody tr:hover td { background: rgba(79, 195, 247, 0.08); }
 
 .totals-table-wrap {
   height: 100%;
+  overflow: auto;
+}
+
+.totals-table-wrap table {
+  min-width: 2400px;
+}
+
+.totals-avg-heat {
+  background: rgba(110, 179, 226, var(--tot-heat-alpha, 0));
 }
 
 .totals-main #status {
@@ -299,7 +308,7 @@ tbody tr:hover td { background: rgba(79, 195, 247, 0.08); }
 
 .player-detail-top {
   display: grid;
-  grid-template-columns: minmax(380px, 460px) 1fr;
+  grid-template-columns: minmax(300px, 380px) 1fr;
   gap: 10px;
   min-height: 460px;
 }
@@ -317,7 +326,7 @@ tbody tr:hover td { background: rgba(79, 195, 247, 0.08); }
   border-radius: 8px;
   background: #111b2a;
   padding: 8px;
-  overflow-x: auto;
+  overflow: hidden;
 }
 
 .player-trend-title {

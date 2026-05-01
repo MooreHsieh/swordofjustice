@@ -4,8 +4,11 @@ const statusEl = document.querySelector('#status')
 const logoutBtn = document.querySelector('#logoutBtn')
 const playerSearchEl = document.querySelector('#playerSearch')
 const totalsBodyEl = document.querySelector('#totalsBody')
+const totalsHeadEl = document.querySelector('.totals-table-wrap thead')
 
 let allRows = []
+let sortKey = 'avg_pvp'
+let sortAsc = false
 
 function setStatus(message, isError = false) {
   statusEl.textContent = message
@@ -33,6 +36,70 @@ function fmtPct(n, d) {
   return v == null ? '—' : `${(v * 100).toFixed(1)}%`
 }
 
+function toRowModel(r) {
+  const matches = Number(r.matches || 0)
+  const wins = Number(r.wins || 0)
+  const losses = Number(r.losses || 0)
+  const kills = Number(r.kills_sum || 0)
+  const heavy = Number(r.heavy_sum || 0)
+  const pvp = Number(r.pvp_sum || 0)
+  const avg = (v) => safeDiv(v, matches) ?? 0
+  return {
+    ...r,
+    matches,
+    wins,
+    losses,
+    win_rate: safeDiv(wins, matches) ?? 0,
+    avg_kills: avg(r.kills_sum),
+    avg_assists: avg(r.assists_sum),
+    avg_resources: avg(r.resources_sum),
+    avg_pvp: avg(r.pvp_sum),
+    avg_bld: avg(r.bld_sum),
+    avg_heal: avg(r.heal_sum),
+    avg_tank: avg(r.tank_sum),
+    avg_heavy: avg(r.heavy_sum),
+    avg_feather: avg(r.feather_sum),
+    avg_bone: avg(r.bone_sum),
+    k_per_h: safeDiv(kills, heavy) ?? 0,
+    dmg_per_kill: safeDiv(pvp, kills) ?? 0,
+  }
+}
+
+function sortDisplayRows(rows) {
+  const sorted = [...rows]
+  sorted.sort((a, b) => {
+    if (sortKey === 'player_name' || sortKey === 'class_name') {
+      const av = String(a[sortKey] || '')
+      const bv = String(b[sortKey] || '')
+      return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av)
+    }
+    const av = Number(a[sortKey] || 0)
+    const bv = Number(b[sortKey] || 0)
+    return sortAsc ? av - bv : bv - av
+  })
+  return sorted
+}
+
+function buildHeatCell(value, maxValue) {
+  const v = Number(value || 0)
+  const m = Number(maxValue || 0)
+  if (!m) return `<td>${v.toFixed(1)}</td>`
+  if (!v) return `<td>0.0</td>`
+  const ratio = Math.min(v / m, 1)
+  const alpha = (0.04 + ratio * 0.1).toFixed(3)
+  return `<td class="totals-avg-heat" style="--tot-heat-alpha:${alpha}">${v.toFixed(1)}</td>`
+}
+
+function updateSortHeader() {
+  if (!totalsHeadEl) return
+  totalsHeadEl.querySelectorAll('[data-sort]').forEach((th) => {
+    const key = th.dataset.sort
+    const base = th.textContent.replace(/[↑↓↕]$/, '')
+    const arrow = key === sortKey ? (sortAsc ? '↑' : '↓') : '↕'
+    th.innerHTML = `${base}<span style="${key === sortKey ? 'color:var(--gold-l)' : 'color:#555'}">${arrow}</span>`
+  })
+}
+
 async function requireAuth() {
   const { data, error } = await supabase.auth.getUser()
   if (error || !data.user) {
@@ -58,37 +125,41 @@ function renderRows(rows) {
     return
   }
 
+  const maxAvg = {
+    avg_kills: Math.max(...rows.map((r) => Number(r.avg_kills || 0)), 0),
+    avg_assists: Math.max(...rows.map((r) => Number(r.avg_assists || 0)), 0),
+    avg_resources: Math.max(...rows.map((r) => Number(r.avg_resources || 0)), 0),
+    avg_pvp: Math.max(...rows.map((r) => Number(r.avg_pvp || 0)), 0),
+    avg_bld: Math.max(...rows.map((r) => Number(r.avg_bld || 0)), 0),
+    avg_heal: Math.max(...rows.map((r) => Number(r.avg_heal || 0)), 0),
+    avg_tank: Math.max(...rows.map((r) => Number(r.avg_tank || 0)), 0),
+    avg_heavy: Math.max(...rows.map((r) => Number(r.avg_heavy || 0)), 0),
+    avg_feather: Math.max(...rows.map((r) => Number(r.avg_feather || 0)), 0),
+    avg_bone: Math.max(...rows.map((r) => Number(r.avg_bone || 0)), 0),
+  }
+
   for (const r of rows) {
     const tr = document.createElement('tr')
-    const matches = Number(r.matches || 0)
-    const wins = Number(r.wins || 0)
-    const losses = Number(r.losses || 0)
-    const kills = Number(r.kills_sum || 0)
-    const heavy = Number(r.heavy_sum || 0)
-    const pvp = Number(r.pvp_sum || 0)
-    const kd = safeDiv(kills, heavy)
-    const dmgPerKill = safeDiv(pvp, kills)
-
     const name = String(r.player_name || '')
     const job = String(r.class_name || '')
     const detailHref = `./stats-player-detail.html?name=${encodeURIComponent(name)}&job=${encodeURIComponent(job)}`
     tr.innerHTML = `
       <td><a class="nav-btn" href="${detailHref}">${name || '—'}</a></td>
-      <td>${r.class_name || '—'}</td>
-      <td>${fmtNum(wins)}</td>
-      <td>${fmtNum(losses)}</td>
-      <td>${fmtNum(matches)}</td>
-      <td>${fmtPct(wins, matches)}</td>
-      <td>${fmtAvg(r.kills_sum, matches)}</td>
-      <td>${fmtAvg(r.assists_sum, matches)}</td>
-      <td>${fmtAvg(r.resources_sum, matches)}</td>
-      <td>${fmtAvg(r.pvp_sum, matches)}</td>
-      <td>${fmtAvg(r.bld_sum, matches)}</td>
-      <td>${fmtAvg(r.heal_sum, matches)}</td>
-      <td>${fmtAvg(r.tank_sum, matches)}</td>
-      <td>${fmtAvg(r.heavy_sum, matches)}</td>
-      <td>${fmtAvg(r.feather_sum, matches)}</td>
-      <td>${fmtAvg(r.bone_sum, matches)}</td>
+      <td>${job || '—'}</td>
+      ${buildHeatCell(r.avg_kills, maxAvg.avg_kills)}
+      ${buildHeatCell(r.avg_assists, maxAvg.avg_assists)}
+      ${buildHeatCell(r.avg_resources, maxAvg.avg_resources)}
+      ${buildHeatCell(r.avg_pvp, maxAvg.avg_pvp)}
+      ${buildHeatCell(r.avg_bld, maxAvg.avg_bld)}
+      ${buildHeatCell(r.avg_heal, maxAvg.avg_heal)}
+      ${buildHeatCell(r.avg_tank, maxAvg.avg_tank)}
+      ${buildHeatCell(r.avg_heavy, maxAvg.avg_heavy)}
+      ${buildHeatCell(r.avg_feather, maxAvg.avg_feather)}
+      ${buildHeatCell(r.avg_bone, maxAvg.avg_bone)}
+      <td>${fmtNum(r.wins)}</td>
+      <td>${fmtNum(r.losses)}</td>
+      <td>${fmtNum(r.matches)}</td>
+      <td>${fmtPct(r.wins, r.matches)}</td>
       <td>${fmtNum(r.kills_sum)}</td>
       <td>${fmtNum(r.assists_sum)}</td>
       <td>${fmtNum(r.resources_sum)}</td>
@@ -99,8 +170,8 @@ function renderRows(rows) {
       <td>${fmtNum(r.heavy_sum)}</td>
       <td>${fmtNum(r.feather_sum)}</td>
       <td>${fmtNum(r.bone_sum)}</td>
-      <td>${kd == null ? '—' : kd.toFixed(2)}</td>
-      <td>${dmgPerKill == null ? '—' : fmtNum(Math.round(dmgPerKill))}</td>
+      <td>${r.k_per_h > 0 ? r.k_per_h.toFixed(2) : '—'}</td>
+      <td>${r.dmg_per_kill > 0 ? fmtNum(Math.round(r.dmg_per_kill)) : '—'}</td>
     `
     totalsBodyEl.appendChild(tr)
   }
@@ -114,8 +185,11 @@ function renderFilteredRows() {
       String(r.class_name || '').toLowerCase().includes(keyword))
     : allRows
 
-  renderRows(filtered)
-  setStatus(`人員總計已更新，共 ${filtered.length} 筆。`)
+  const modeled = filtered.map(toRowModel)
+  const sorted = sortDisplayRows(modeled)
+  renderRows(sorted)
+  updateSortHeader()
+  setStatus(`人員總計已更新，共 ${sorted.length} 筆。`)
 }
 
 async function loadTotals() {
@@ -144,6 +218,19 @@ async function bootstrap() {
 
   if (logoutBtn) logoutBtn.addEventListener('click', onLogout)
   if (playerSearchEl) playerSearchEl.addEventListener('input', renderFilteredRows)
+  if (totalsHeadEl) {
+    totalsHeadEl.addEventListener('click', (e) => {
+      const th = e.target.closest('[data-sort]')
+      if (!th) return
+      const key = th.dataset.sort
+      if (sortKey === key) sortAsc = !sortAsc
+      else {
+        sortKey = key
+        sortAsc = false
+      }
+      renderFilteredRows()
+    })
+  }
 
   await loadTotals()
 }

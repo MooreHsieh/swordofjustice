@@ -83,9 +83,11 @@ async function onLogout() {
 
 function buildRadarSvg(target, allRows) {
   const n = RADAR_METRICS.length
-  const cx = 180
-  const cy = 160
-  const r = 110
+  const W = 300
+  const H = 270
+  const cx = 150
+  const cy = 132
+  const r = 92
 
   const avgByMetric = (row, key) => safeDiv(row[key], row.matches) || 0
   const maxByMetric = Object.fromEntries(
@@ -120,7 +122,7 @@ function buildRadarSvg(target, allRows) {
   }).join('')
 
   return `
-    <svg width="360" height="320" viewBox="0 0 360 320" style="display:block;min-width:360px;">
+    <svg viewBox="0 0 ${W} ${H}" style="display:block;width:100%;height:auto;max-width:340px;">
       ${ring}${spokes}${poly}${dots}${labels}
     </svg>
   `
@@ -146,7 +148,7 @@ function renderTrendCharts(records) {
   }
 
   const mkChart = (metric) => {
-    const W = 560
+    const W = 760
     const H = 150
     const PL = 40
     const PR = 14
@@ -179,7 +181,7 @@ function renderTrendCharts(records) {
     return `
       <div class="player-trend-card">
         <div class="player-trend-title">${metric.label}</div>
-        <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;min-width:${W}px;">
+        <svg viewBox="0 0 ${W} ${H}" style="display:block;width:100%;height:auto;">
           <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT + ch}" stroke="rgba(201,168,76,0.22)" stroke-width="1"/>
           <line x1="${PL}" y1="${PT + ch}" x2="${W - PR}" y2="${PT + ch}" stroke="rgba(201,168,76,0.22)" stroke-width="1"/>
           ${grid}
