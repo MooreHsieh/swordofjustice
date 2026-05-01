@@ -100,6 +100,7 @@ label { font-size: 0.85rem; color: var(--muted); }
 table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 th, td { padding: 8px 10px; border-bottom: 1px solid #233042; text-align: left; white-space: nowrap; }
 thead th { background: #1a2432; color: #d3dfec; }
+tbody tr:hover td { background: rgba(79, 195, 247, 0.08); }
 
 #status { margin-top: 12px; min-height: 20px; font-size: 0.9rem; color: var(--muted); }
 
@@ -606,6 +607,14 @@ thead th { background: #1a2432; color: #d3dfec; }
   color: #d3dfec;
 }
 
+.overview-heat-cell {
+  background: rgba(110, 179, 226, var(--ov-heat-alpha, 0));
+}
+
+.detail-table tbody tr:hover td {
+  background: rgba(79, 195, 247, 0.09) !important;
+}
+
 .detail-sort {
   cursor: pointer;
   user-select: none;
@@ -728,6 +737,11 @@ thead th { background: #1a2432; color: #d3dfec; }
   flex-wrap: wrap;
 }
 
+.cq-row-axes {
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
 .cq-label {
   font-size: 11px;
   color: #9fb1c6;
@@ -738,8 +752,9 @@ thead th { background: #1a2432; color: #d3dfec; }
   border: 1px solid #2a394f;
   color: #dbe6f2;
   font-size: 12px;
-  padding: 4px 7px;
+  padding: 3px 6px;
   border-radius: 4px;
+  min-width: 108px;
 }
 
 .cq-mini-btn {
@@ -818,6 +833,9 @@ thead th { background: #1a2432; color: #d3dfec; }
 }
 
 @media (max-width: 920px) {
+  .cq-row-axes {
+    flex-wrap: wrap;
+  }
   .cq-wrap {
     flex-wrap: wrap;
   }

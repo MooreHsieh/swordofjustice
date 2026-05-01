@@ -6,6 +6,7 @@ const enemyGuildSearchEl = document.querySelector('#enemyGuildSearch')
 const leagueListBody = document.querySelector('#leagueListBody')
 
 let allLeagues = []
+const crownSvg = '<svg viewBox="0 0 20 20" fill="none"><path d="M3 15h14l-1.2-7-3.5 2.7L10 5.5 7.7 10.7 4.2 8 3 15Z"/><path d="M4 17h12"/></svg>'
 
 function setStatus(message, isError = false) {
   statusEl.textContent = message
@@ -38,13 +39,17 @@ function renderLeagueList(leagues) {
   }
 
   for (const league of leagues) {
+    const aWin = league.result === 'our_win'
+    const bWin = league.result === 'enemy_win'
+    const aName = `${league.guild_a}${aWin ? `<span class="vs-win-crown" title="勝利">${crownSvg}</span>` : ''}`
+    const bName = `${league.guild_b}${bWin ? `<span class="vs-win-crown" title="勝利">${crownSvg}</span>` : ''}`
     const tr = document.createElement('tr')
     tr.innerHTML = `
       <td>${league.match_date}</td>
       <td>第${league.round_no}場</td>
-      <td>${league.guild_a}</td>
+      <td>${aName}</td>
       <td>${league.guild_a_players ?? 0}</td>
-      <td>${league.guild_b}</td>
+      <td>${bName}</td>
       <td>${league.guild_b_players ?? 0}</td>
       <td><a class="nav-btn" href="./stats-detail.html?leagueId=${league.id}">查看細節</a></td>
     `
@@ -63,14 +68,18 @@ function renderFilteredLeagueList() {
 }
 
 async function loadStats() {
+  setStatus('資料載入中...')
+  leagueListBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>'
+
   const { data: leagues, error } = await supabase
     .from('guild_leagues')
-    .select('id, match_date, round_no, guild_a, guild_b')
+    .select('id, match_date, round_no, guild_a, guild_b, result')
     .order('match_date', { ascending: false })
     .order('round_no', { ascending: false })
     .limit(100)
 
   if (error) {
+    leagueListBody.innerHTML = '<tr><td colspan="7">讀取失敗</td></tr>'
     setStatus(error.message, true)
     return
   }
@@ -86,6 +95,7 @@ async function loadStats() {
       .in('league_id', leagueIds)
 
     if (recordsError) {
+      leagueListBody.innerHTML = '<tr><td colspan="7">讀取失敗</td></tr>'
       setStatus(recordsError.message, true)
       return
     }

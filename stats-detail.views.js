@@ -261,7 +261,17 @@ function buildCustomQuadrant(rows, state) {
     const on = cq.jobs.has(j), c = JOB_CLR[j] || '#c9a84c'
     return `<button class="cq-chip ${on ? 'on' : ''}" data-cq-action="toggle-job" data-cq-job="${escapeHtml(j)}" style="${on ? `--cq-job:${c};` : ''}">${escapeHtml(j)}</button>`
   }).join('')
-  const visiblePlayers = all.filter((p) => cq.jobs.has(p.class_name || '未知'))
+  const visiblePlayers = all
+    .filter((p) => cq.jobs.has(p.class_name || '未知'))
+    .sort((a, b) => {
+      const aj = a.class_name || '未知'
+      const bj = b.class_name || '未知'
+      const ai = JOB_ORDER.indexOf(aj)
+      const bi = JOB_ORDER.indexOf(bj)
+      const jCmp = ((ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi))
+      if (jCmp !== 0) return jCmp
+      return String(a.player_name || '').localeCompare(String(b.player_name || ''))
+    })
   const plBtns = visiblePlayers.map((p) => {
     const key = p.player_name || '', on = !hidden.has(key), c = JOB_CLR[p.class_name || '未知'] || '#c9a84c'
     return `<button class="cq-chip ${on ? 'on' : ''}" data-cq-action="toggle-player" data-cq-player="${encodeURIComponent(key)}" style="${on ? `--cq-job:${c};` : ''}">${escapeHtml(String(key).slice(0, 6))}</button>`
@@ -270,7 +280,7 @@ function buildCustomQuadrant(rows, state) {
   return `
     <div class="cq-root">
       <div class="cq-controls">
-        <div class="cq-row">
+        <div class="cq-row cq-row-axes">
           <span class="cq-label">↔ X軸</span>
           <select class="cq-select" data-cq-action="set-x">${xOpts}</select>
           <span class="cq-label">↕ Y軸</span>
@@ -399,10 +409,34 @@ function buildJobTab(rows, state) {
   return `${radarBar}${table}`
 }
 
+// 總覽頁：依各欄位相對最大值套用柔和熱力底色（提升可讀性，不做強烈對比）
+function buildOverviewHeatCell(value, maxValue) {
+  const num = Number(value || 0)
+  const max = Number(maxValue || 0)
+  if (!num || !max) return `<td>${formatNum(num)}</td>`
+  const ratio = Math.min(num / max, 1)
+  // 透明度壓低，避免像強熱力圖那樣刺眼
+  const alpha = (0.04 + ratio * 0.1).toFixed(3)
+  return `<td class="overview-heat-cell" style="--ov-heat-alpha:${alpha}">${formatNum(num)}</td>`
+}
+
 export function renderTabContent(tab, rows, state, grouped) {
   const sortedRows = sortRows(rows, state.sortKey, state.sortAsc)
 
   if (tab === 'overview') {
+    const maxMap = {
+      kills: Math.max(...rows.map((r) => Number(r.kills || 0)), 0),
+      assists: Math.max(...rows.map((r) => Number(r.assists || 0)), 0),
+      damage_to_players: Math.max(...rows.map((r) => Number(r.damage_to_players || 0)), 0),
+      damage_to_buildings: Math.max(...rows.map((r) => Number(r.damage_to_buildings || 0)), 0),
+      healing: Math.max(...rows.map((r) => Number(r.healing || 0)), 0),
+      damage_taken: Math.max(...rows.map((r) => Number(r.damage_taken || 0)), 0),
+      serious_injuries: Math.max(...rows.map((r) => Number(r.serious_injuries || 0)), 0),
+      feather_spring: Math.max(...rows.map((r) => Number(r.feather_spring || 0)), 0),
+      burning_bone: Math.max(...rows.map((r) => Number(r.burning_bone || 0)), 0),
+      resources: Math.max(...rows.map((r) => Number(r.resources || 0)), 0),
+    }
+
     const th = (label, key) => {
       const active = state.sortKey === key
       const arrow = active ? (state.sortAsc ? '↑' : '↓') : '↕'
@@ -412,7 +446,7 @@ export function renderTabContent(tab, rows, state, grouped) {
       <div class="detail-table-wrap"><table class="detail-table"><thead><tr>
       <th>#</th>${th('玩家', 'player_name')}${th('職業', 'class_name')}${th('擊敗', 'kills')}${th('助攻', 'assists')}${th('輸出', 'damage_to_players')}${th('塔傷', 'damage_to_buildings')}${th('治療', 'healing')}${th('承傷', 'damage_taken')}${th('重傷', 'serious_injuries')}${th('化羽', 'feather_spring')}${th('焚骨', 'burning_bone')}${th('資源', 'resources')}
       </tr></thead><tbody>
-      ${sortedRows.length ? sortedRows.map((r, idx) => `<tr><td>${idx + 1}</td><td>${r.player_name || '—'}</td><td>${r.class_name || '—'}</td><td>${formatNum(r.kills)}</td><td>${formatNum(r.assists)}</td><td>${formatNum(r.damage_to_players)}</td><td>${formatNum(r.damage_to_buildings)}</td><td>${formatNum(r.healing)}</td><td>${formatNum(r.damage_taken)}</td><td>${formatNum(r.serious_injuries)}</td><td>${formatNum(r.feather_spring)}</td><td>${formatNum(r.burning_bone)}</td><td>${formatNum(r.resources)}</td></tr>`).join('') : '<tr><td colspan="13" class="detail-empty">無符合資料</td></tr>'}
+      ${sortedRows.length ? sortedRows.map((r, idx) => `<tr><td>${idx + 1}</td><td>${r.player_name || '—'}</td><td>${r.class_name || '—'}</td>${buildOverviewHeatCell(r.kills, maxMap.kills)}${buildOverviewHeatCell(r.assists, maxMap.assists)}${buildOverviewHeatCell(r.damage_to_players, maxMap.damage_to_players)}${buildOverviewHeatCell(r.damage_to_buildings, maxMap.damage_to_buildings)}${buildOverviewHeatCell(r.healing, maxMap.healing)}${buildOverviewHeatCell(r.damage_taken, maxMap.damage_taken)}${buildOverviewHeatCell(r.serious_injuries, maxMap.serious_injuries)}${buildOverviewHeatCell(r.feather_spring, maxMap.feather_spring)}${buildOverviewHeatCell(r.burning_bone, maxMap.burning_bone)}${buildOverviewHeatCell(r.resources, maxMap.resources)}</tr>`).join('') : '<tr><td colspan="13" class="detail-empty">無符合資料</td></tr>'}
       </tbody></table></div>`
   }
 

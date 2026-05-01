@@ -58,6 +58,8 @@ export function wireEvents({
     const cqBtn = event.target.closest('[data-cq-action]')
     if (cqBtn) {
       const action = cqBtn.dataset.cqAction
+      // select 元件由 change 事件處理，避免點開下拉時提前重繪造成收起
+      if (action === 'set-x' || action === 'set-y') return
       if (onCqChange(action, cqBtn.dataset)) onRenderContent()
       return
     }
